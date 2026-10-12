@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect, FormEvent } from 'react';
+import { useRef, useState, useEffect, SubmitEvent } from 'react';
 
 export default function DemoModal() {
   const modalRef = useRef<HTMLDialogElement>(null);
@@ -24,7 +24,7 @@ export default function DemoModal() {
     modalRef.current?.close();
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = formRef.current;
     if (!form) return;

@@ -426,7 +426,7 @@ body.nav-open {
 .hero__fog {
   position: absolute;
   inset: 0;
-  background-image: url('/img/gradient-fog.png');
+  background-image: url('../../public/img/gradient-fog.png');
   background-size: cover;
   background-position: center;
 }
@@ -447,7 +447,7 @@ body.nav-open {
   width: 100%;
   max-width: min(1088px, calc(100% - 2 * var(--container-px)));
   margin-inline: auto;
-  background-image: url('/img/background-laptop.png');
+  background-image: url('../../public/img/background-laptop.png');
   background-size: 100% auto;
   background-position: bottom center;
   background-repeat: no-repeat;
@@ -555,7 +555,7 @@ body.nav-open {
 /* .hero__preview-overlay {
   position: absolute;
   inset: 0;
-  background-image: url('../img/preview-info.png');
+  background-image: url('../../public/img/preview-info.png');
   background-size: cover;
   background-position: center;
   z-index: 1;
@@ -564,7 +564,7 @@ body.nav-open {
 .hero__preview-overlay {
   position: absolute;
   inset: 0;
-  background-image: url('/img/preview-info.png');
+  background-image: url('../../public/img/preview-info.png');
   background-size: cover;
   background-position: center;
   z-index: 1;
@@ -1671,7 +1671,7 @@ body.nav-open {
    TESTIMONIALS SECTION
  */
 .testimonials {
-  background-image: url('/img/testimonials-bg.jpg');
+  background-image: url('../../public/img/testimonials-bg.jpg');
   background-size: cover;
   background-position: center;
   padding-bottom: clamp(3rem, 6vw, 5rem);
@@ -2083,7 +2083,7 @@ body.nav-open {
 .newsletter__bg {
   position: absolute;
   inset: 0;
-  background-image: url('/img/newsletter-bg.jpg');
+  background-image: url('../../public/img/newsletter-bg.jpg');
   background-size: cover;
   background-position: center;
   z-index: 0;

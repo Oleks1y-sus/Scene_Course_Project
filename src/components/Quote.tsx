@@ -1,8 +1,10 @@
+import quoteHandPhone from '@/public/img/quote-hand-phone.jpg';
+
 export default function Quote() {
   return (
     <section className="quote">
       <div className="quote__bg">
-        <img src="/img/quote-hand-phone.jpg" alt="Мобільний застосунок платформи в руці" loading="lazy" />
+        <img src={quoteHandPhone.src} alt="Мобільний застосунок платформи в руці" loading="lazy" />
       </div>
       <div className="container">
         <div className="quote__content scroll-reveal">

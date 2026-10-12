@@ -1,3 +1,9 @@
+import featureOverlays from '@/public/img/feature-overlays.jpg';
+import featurePolls from '@/public/img/feature-polls.png';
+import featureHd from '@/public/img/feature-hd.png';
+import featureQa from '@/public/img/feature-qa.png';
+import featureChat from '@/public/img/feature-chat.png';
+
 export default function Experience() {
   return (
     <section className="experience" id="features">
@@ -9,7 +15,7 @@ export default function Experience() {
 
         <div className="experience__grid">
           <article className="experience__card experience__card--wide scroll-reveal">
-            <img src="/img/feature-overlays.jpg" alt="Інтерактивні накладки поверх живого відео" className="h100" loading="lazy" />
+            <img src={featureOverlays.src} alt="Інтерактивні накладки поверх живого відео" className="h100" loading="lazy" />
             <div className="experience__card-text">
               <h3 className="experience__card-title">Інтерактивні накладки</h3>
               <p className="experience__card-desc">Додавайте фірмову графіку поверх живого відео: представляйте спікерів, виділяйте головне та показуйте клікабельні заклики до дії.</p>
@@ -18,7 +24,7 @@ export default function Experience() {
 
           <div className="experience__row scroll-reveal delay-100">
             <article className="experience__card experience__card--dark-text">
-              <img src="/img/feature-polls.png" alt="Інтерактивні опитування на сцені" className="h100" loading="lazy" />
+              <img src={featurePolls.src} alt="Інтерактивні опитування на сцені" className="h100" loading="lazy" />
               <div className="experience__card-text">
                 <h3 className="experience__card-title">Інтерактивні опитування</h3>
                 <p className="experience__card-desc">Запускайте опитування просто на сцені та дивіться, як результати оновлюються в реальному часі.</p>
@@ -26,7 +32,7 @@ export default function Experience() {
             </article>
 
             <article className="experience__card experience__card--light-text">
-              <img src="/img/feature-hd.png" alt="Трансляція у високій якості HD" className="h100" loading="lazy" />
+              <img src={featureHd.src} alt="Трансляція у високій якості HD" className="h100" loading="lazy" />
               <div className="experience__card-text">
                 <h3 className="experience__card-title">Відео в HD-якості</h3>
                 <p className="experience__card-desc">Дарує глядачам кращий досвід завдяки кришталево чистій HD-трансляції.</p>
@@ -36,7 +42,7 @@ export default function Experience() {
 
           <div className="experience__row">
             <article className="experience__card experience__card--light-text">
-              <img src="/img/feature-qa.png" alt="Блок питань та відповідей" loading="lazy" />
+              <img src={featureQa.src} alt="Блок питань та відповідей" loading="lazy" />
               <div className="experience__card-text">
                 <h3 className="experience__card-title">Питання та відповіді</h3>
                 <p className="experience__card-desc">Модеруйте запитання аудиторії, дозволяйте голосувати за них і запрошуйте учасників на сцену.</p>
@@ -44,7 +50,7 @@ export default function Experience() {
             </article>
 
             <article className="experience__card experience__card--dark-text">
-              <img src="/img/feature-chat.png" alt="Чат учасників із реакціями" loading="lazy" />
+              <img src={featureChat.src} alt="Чат учасників із реакціями" loading="lazy" />
               <div className="experience__card-text">
                 <h3 className="experience__card-title">Чат</h3>
                 <p className="experience__card-desc">Саме в чаті народжується залученість. Зі зручним форматом, як у месенджері, учасники висловлюються за допомогою емодзі, реакцій і гіфок.</p>

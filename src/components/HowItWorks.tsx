@@ -1,4 +1,9 @@
 'use client';
+
+import howCreate from '@/public/img/how-create.jpg';
+import howEngage from '@/public/img/how-engage.png';
+import howAnalyze from '@/public/img/how-analyze.png';
+
 export default function HowItWorks() {
   const openModal = () => (document.getElementById('demo-modal') as HTMLDialogElement)?.showModal();
 
@@ -31,7 +36,7 @@ export default function HowItWorks() {
               </p>
             </div>
             <div className="how-it-works__step-media">
-              <img src="/img/how-create.jpg" alt="Інтерфейс створення заходу" loading="lazy" />
+              <img src={howCreate.src} alt="Інтерфейс створення заходу" loading="lazy" />
             </div>
           </div>
 
@@ -50,7 +55,7 @@ export default function HowItWorks() {
               </p>
             </div>
             <div className="how-it-works__step-media">
-              <img src="/img/how-engage.png" alt="Інтерфейс залучення аудиторії" loading="lazy" />
+              <img src={howEngage.src} alt="Інтерфейс залучення аудиторії" loading="lazy" />
             </div>
           </div>
 
@@ -69,7 +74,7 @@ export default function HowItWorks() {
               </p>
             </div>
             <div className="how-it-works__step-media">
-              <img src="/img/how-analyze.png" alt="Інтерфейс аналітики заходу" loading="lazy" />
+              <img src={howAnalyze.src} alt="Інтерфейс аналітики заходу" loading="lazy" />
             </div>
           </div>
         </div>

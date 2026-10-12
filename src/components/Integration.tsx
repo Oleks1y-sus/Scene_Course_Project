@@ -1,3 +1,9 @@
+import integrationLogo1 from '@/public/img/integration-logo-1.png';
+import integrationLogo2 from '@/public/img/integration-logo-2.png';
+import integrationLogo3 from '@/public/img/integration-logo-3.png';
+import integrationLogo4 from '@/public/img/integration-logo-4.png';
+import integrationBadge from '@/public/img/integration-badge.jpg';
+
 export default function Integration() {
   return (
     <section className="integration">
@@ -10,19 +16,19 @@ export default function Integration() {
                   <span className="integration__oval-text">Власна<br />інтеграція</span>
                 </div>
                 <div className="integration__oval">
-                  <img src="/img/integration-logo-4.png" alt="Marketo" className="integration__oval-img" loading="lazy" />
+                  <img src={integrationLogo4.src} alt="Marketo" className="integration__oval-img" loading="lazy" />
                 </div>
                 <div className="integration__oval">
-                  <img src="/img/integration-logo-3.png" alt="Salesforce" className="integration__oval-img" loading="lazy" />
+                  <img src={integrationLogo3.src} alt="Salesforce" className="integration__oval-img" loading="lazy" />
                 </div>
               </div>
 
               <div className="integration__ovals-right">
                 <div className="integration__oval">
-                  <img src="/img/integration-logo-2.png" alt="Pardot" className="integration__oval-img" loading="lazy" />
+                  <img src={integrationLogo2.src} alt="Pardot" className="integration__oval-img" loading="lazy" />
                 </div>
                 <div className="integration__oval">
-                  <img src="/img/integration-logo-1.png" alt="HubSpot" className="integration__oval-img" loading="lazy" />
+                  <img src={integrationLogo1.src} alt="HubSpot" className="integration__oval-img" loading="lazy" />
                 </div>
                 <div className="integration__oval integration__oval--custom">
                   <span className="integration__oval-text">Власна<br />інтеграція</span>
@@ -37,7 +43,7 @@ export default function Integration() {
                 Інтегруйте<br />
                 <span className="integration__title-row">
                   <span className="integration__title-badge">
-                    <img src="/img/integration-badge.jpg" alt="" loading="lazy" />
+                    <img src={integrationBadge.src} alt="" loading="lazy" />
                   </span>
                   свої дані
                 </span>

@@ -1,9 +1,11 @@
+import brandsImage from '@/public/img/brands.png';
+
 export default function Brands() {
   return (
     <section className="brands">
       <div className="container">
         <div className="brands__right scroll-reveal">
-          <img src="/img/brands.png" alt="Логотипи компаній-партнерів платформи" loading="lazy" />
+          <img src={brandsImage.src} alt="Логотипи компаній-партнерів платформи" loading="lazy" />
         </div>
         <div className="brands__left scroll-reveal delay-100">
           <h2 className="brands__title">Провідні команди переходять на «Сцену»</h2>

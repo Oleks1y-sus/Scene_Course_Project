@@ -1,4 +1,7 @@
 'use client';
+
+import logoFooter from '@/public/img/logo-footer.png';
+
 export default function Footer() {
   const openModal = () => (document.getElementById('demo-modal') as HTMLDialogElement)?.showModal();
 
@@ -8,7 +11,7 @@ export default function Footer() {
         <div className="site-footer__top">
           <nav className="site-footer__nav" aria-label="Навігація у футері">
             <div className="site-footer__col">
-              <img src="/img/logo-footer.png" alt="Сцена" className="site-footer__logo" />
+              <img src={logoFooter.src} alt="Сцена" className="site-footer__logo" />
             </div>
 
             <div className="site-footer__col">

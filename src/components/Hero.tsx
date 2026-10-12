@@ -1,4 +1,7 @@
 'use client';
+
+import photoVideoPreview from '@/public/img/photo-video-preview.png';
+
 export default function Hero() {
   return (
     <section className="hero">
@@ -23,7 +26,7 @@ export default function Hero() {
         <div className="hero__preview">
           <img
             className="hero__preview-photo"
-            src="/img/photo-video-preview.png"
+            src={photoVideoPreview.src}
             alt="Ведучий проводить живу трансляцію в інтерфейсі платформи"
             width="1280"
             height="720"

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  basePath: '/scene_Course_Project',
 };
 
 export default nextConfig;

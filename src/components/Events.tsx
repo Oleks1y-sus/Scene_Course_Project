@@ -1,4 +1,7 @@
 'use client';
+
+import eventImage from '@/public/img/event-1.jpg';
+
 export default function Events() {
   const openModal = () => (document.getElementById('demo-modal') as HTMLDialogElement)?.showModal();
 
@@ -18,7 +21,7 @@ export default function Events() {
               <button type="button" className="btn btn--primary event-card__btn big-button" onClick={openModal}>Зареєструватися</button>
             </div>
             <div className="event-card__media">
-              <img src="/img/event-1.jpg" alt="Спікери вебінару" loading="lazy" />
+              <img src={eventImage.src} alt="Спікери вебінару" loading="lazy" />
             </div>
           </article>
         </div>

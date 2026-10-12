@@ -1,3 +1,5 @@
+import revenueMockup from '@/public/img/revenue-mockup.jpg';
+
 export default function Revenue() {
   return (
     <section className="revenue">
@@ -8,7 +10,7 @@ export default function Revenue() {
               <span className="revenue__title-block">Зростіть</span>
               <span className="revenue__title-inline">
                 <span className="revenue__badge">
-                  <img src="/img/revenue-mockup.jpg" alt="Панель аналітики доходу від заходів" loading="lazy" />
+                  <img src={revenueMockup.src} alt="Панель аналітики доходу від заходів" loading="lazy" />
                 </span>
                 дохід
               </span>

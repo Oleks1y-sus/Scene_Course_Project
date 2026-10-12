@@ -1,3 +1,8 @@
+import studioAgenda from '@/public/img/studio-agenda.jpg';
+import studioBrand from '@/public/img/studio-brand.png';
+import studioStage from '@/public/img/studio-stage.png';
+import studioGreenroom from '@/public/img/studio-greenroom.jpg';
+
 export default function Studio() {
   return (
     <section className="studio">
@@ -14,7 +19,7 @@ export default function Studio() {
               <p className="studio__card-desc">Швидко змінюйте послідовність дій вебінару — програма заходу оновлюється автоматично щоразу, коли ви переставляєте блоки.</p>
             </div>
             <div className="studio__card-media">
-              <img src="/img/studio-agenda.jpg" alt="Інтерфейс конструктора програми заходу" loading="lazy" />
+              <img src={studioAgenda.src} alt="Інтерфейс конструктора програми заходу" loading="lazy" />
             </div>
           </article>
 
@@ -25,7 +30,7 @@ export default function Studio() {
                 <p className="studio__card-desc">Оформте весь досвід у стилі бренду: сторінки реєстрації, листи, фони, логотипи, шрифти, накладки та шаблони фотобудки.</p>
               </div>
               <div className="studio__card-media">
-                <img src="/img/studio-brand.png" alt="Інтерфейс налаштування брендування" loading="lazy" />
+                <img src={studioBrand.src} alt="Інтерфейс налаштування брендування" loading="lazy" />
               </div>
             </article>
 
@@ -35,7 +40,7 @@ export default function Studio() {
                 <p className="studio__card-desc">Створюйте фірмові накладки, нижні титри та градієнти безпосередньо в платформі.</p>
               </div>
               <div className="studio__card-media">
-                <img src="/img/studio-stage.png" alt="Інтерфейс набору для оформлення сцени" loading="lazy" />
+                <img src={studioStage.src} alt="Інтерфейс набору для оформлення сцени" loading="lazy" />
               </div>
             </article>
 
@@ -45,7 +50,7 @@ export default function Studio() {
                 <p className="studio__card-desc">Запрошуйте спікерів до закритої кімнати очікування, щоб вони познайомилися та підготувалися до виходу на сцену.</p>
               </div>
               <div className="studio__card-media">
-                <img src="/img/studio-greenroom.jpg" alt="Інтерфейс зеленої кімнати для спікерів" loading="lazy" />
+                <img src={studioGreenroom.src} alt="Інтерфейс зеленої кімнати для спікерів" loading="lazy" />
               </div>
             </article>
           </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import logo from '@/public/img/logo.png';
 import { useState, useEffect } from 'react';
 
 export default function Header() {
@@ -42,7 +43,7 @@ export default function Header() {
       <header className={`site-header ${isScrolled ? 'scrolled' : ''}`} id="site-header">
         <div className="container">
           <a href="./" className="site-logo" aria-label="Сцена — на головну">
-            <img src="/img/logo.png" alt="" className="site-logo__img" width="28" height="28" />
+            <img src={logo.src} alt="" className="site-logo__img" width="28" height="28" />
             <span className="site-logo__name">сцена</span>
           </a>
 

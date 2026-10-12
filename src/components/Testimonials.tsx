@@ -1,5 +1,8 @@
 'use client';
 
+import testimonialAlly from '@/public/img/testimonial-ally.jpg';
+import testimonialTalisha from '@/public/img/testimonial-talisha.jpg';
+import testimonialDribbble from '@/public/img/testimonial-dribbble.png';
 import { useEffect, useRef } from 'react';
 
 export default function Testimonials() {
@@ -75,7 +78,7 @@ export default function Testimonials() {
                 <article className="testimonial-card">
                   <p className="testimonial-card__text">«Ми обрали «Сцену», бо вона інтуїтивна, гарно виглядає та створена для взаємодії з аудиторією. Чат у стилі месенджера, питання на сцені й опитування помітно підвищили залученість учасників.»</p>
                   <div className="testimonial-card__author">
-                    <img src="/img/testimonial-ally.jpg" alt="Олена Мельник" className="testimonial-card__avatar" width="44" height="44" loading="lazy" />
+                    <img src={testimonialAlly.src} alt="Олена Мельник" className="testimonial-card__avatar" width="44" height="44" loading="lazy" />
                     <div className="testimonial-card__info">
                       <span className="testimonial-card__name">Олена Мельник</span>
                       <span className="testimonial-card__role">Директорка з маркетингу подій</span>
@@ -89,7 +92,7 @@ export default function Testimonials() {
                 <article className="testimonial-card">
                   <p className="testimonial-card__text">«Раніше доводилося поєднувати відеомікшер, OBS і купу додаткового обладнання. Тепер двоє людей легко проводять наші онлайн-заходи без жодної спеціальної техніки. <strong>Одна платформа замінила весь набір інструментів.</strong>»</p>
                   <div className="testimonial-card__author">
-                    <img src="/img/testimonial-talisha.jpg" alt="Тарас Коваленко" className="testimonial-card__avatar" width="44" height="44" loading="lazy" />
+                    <img src={testimonialTalisha.src} alt="Тарас Коваленко" className="testimonial-card__avatar" width="44" height="44" loading="lazy" />
                     <div className="testimonial-card__info">
                       <span className="testimonial-card__name">Тарас Коваленко</span>
                       <span className="testimonial-card__role">Керівник відділу подій</span>
@@ -103,7 +106,7 @@ export default function Testimonials() {
                 <article className="testimonial-card">
                   <p className="testimonial-card__text">««Сцена» — це 10 з 10. Коли спонсори розглядають участь у наших заходах, <strong>платформа стає нашою «секретною зброєю»</strong>.»</p>
                   <div className="testimonial-card__author">
-                    <img src="/img/testimonial-dribbble.png" alt="Ірина Бондар" className="testimonial-card__avatar" width="44" height="44" loading="lazy" />
+                    <img src={testimonialDribbble.src} alt="Ірина Бондар" className="testimonial-card__avatar" width="44" height="44" loading="lazy" />
                     <div className="testimonial-card__info">
                       <span className="testimonial-card__name">Ірина Бондар</span>
                       <span className="testimonial-card__role">Менеджерка спільноти</span>
