@@ -40,7 +40,15 @@ export default function DemoModal() {
   };
 
   return (
-    <dialog ref={modalRef} className="modal" id="demo-modal" aria-labelledby="demo-modal-title">
+    <dialog
+      ref={modalRef}
+      className="modal"
+      id="demo-modal"
+      aria-labelledby="demo-modal-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) closeModal();
+      }}
+    >
       <div className="modal__content">
         <button type="button" className="modal__close" onClick={closeModal} aria-label="Закрити вікно">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
