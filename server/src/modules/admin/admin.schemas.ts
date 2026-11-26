@@ -5,7 +5,12 @@ import {
   USER_ROLES,
   USER_STATUSES,
 } from '../../db/schema.js';
-import { displayNameSchema, emailSchema, passwordSchema } from '../auth/auth.schemas.js';
+import {
+  emailSchema,
+  loginNameSchema,
+  passwordSchema,
+  usernameSchema,
+} from '../auth/auth.schemas.js';
 import { hasMarkup, normalizeText } from '../../lib/text.js';
 
 export const adminReportQuerySchema = z.object({
@@ -81,7 +86,8 @@ export const adminUserUpdateSchema = z
 
 export const createAdminSchema = z
   .object({
-    displayName: displayNameSchema,
+    username: usernameSchema,
+    login: loginNameSchema,
     email: emailSchema,
     password: passwordSchema.optional(),
   })

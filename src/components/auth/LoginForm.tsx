@@ -4,19 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { OtpStep } from '@/components/auth/OtpStep';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
 import { apiPost, ApiError, errorMessage } from '@/lib/api';
-import { isValidEmail } from '@/lib/format';
+import { isValidHandle } from '@/lib/format';
 import type { User } from '@/lib/types';
-
-interface LoginStepOne {
-  otpRequired?: boolean;
-  requiresEmailVerification?: boolean;
-  email: string;
-  devCode?: string;
-}
 
 interface LoginResult {
   user: User;
@@ -26,18 +18,12 @@ interface LoginResult {
 export function LoginForm({ nextPath }: { nextPath: string }) {
   const router = useRouter();
   const { user, loading, setUser } = useAuth();
-  const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
-  const [email, setEmail] = useState('');
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState('');
-  const [devCode, setDevCode] = useState<string | undefined>();
-  const [otpPurpose, setOtpPurpose] = useState<'LOGIN' | 'VERIFY_EMAIL'>('LOGIN');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [fields, setFields] = useState<Record<string, string>>({});
-  const [cooldown, setCooldown] = useState(0);
-  const [info, setInfo] = useState('');
 
   const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
@@ -45,25 +31,13 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
     if (!loading && user) router.replace(nextPath);
   }, [loading, user, router, nextPath]);
 
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
-    return () => window.clearInterval(timer);
-  }, [cooldown]);
-
-  const applyError = (caught: unknown) => {
-    setError(errorMessage(caught));
-    if (caught instanceof ApiError) setFields(caught.fields ?? {});
-  };
-
-  const handleCredentials = async (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setFields({});
-    setInfo('');
 
-    if (!isValidEmail(email)) {
-      setFields({ email: 'Введіть коректну електронну пошту.' });
+    if (!isValidHandle(login)) {
+      setFields({ login: 'Логін: 3–30 символів, латиниця, цифри або підкреслення.' });
       return;
     }
     if (!password) {
@@ -73,101 +47,20 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
 
     setBusy(true);
     try {
-      const result = await apiPost<LoginStepOne>('/auth/login', {
-        email: email.trim().toLowerCase(),
+      const result = await apiPost<LoginResult>('/auth/login', {
+        login: login.trim().toLowerCase(),
         password,
       });
-      setEmail(result.email);
-      setDevCode(result.devCode);
-      setOtpPurpose(result.requiresEmailVerification ? 'VERIFY_EMAIL' : 'LOGIN');
-      setStep('otp');
-      setCooldown(60);
-      if (result.devCode) setCode(result.devCode);
-      if (result.requiresEmailVerification) {
-        setInfo('Спочатку підтвердіть електронну пошту — код уже надіслано.');
-      } else {
-        setInfo('Код входу надіслано на пошту.');
-      }
-    } catch (caught) {
-      applyError(caught);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleOtp = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError('');
-    setFields({});
-    if (code.length !== 6) {
-      setFields({ code: 'Код має містити 6 цифр.' });
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const endpoint = otpPurpose === 'VERIFY_EMAIL' ? '/auth/verify-email' : '/auth/login/verify';
-      const result = await apiPost<LoginResult>(endpoint, { email, code });
       setUser(result.user);
-      const destination = result.mustChangePassword ? '/profile?tab=security&force=1' : nextPath;
-      router.push(destination);
+      router.push(result.mustChangePassword ? '/profile?tab=security&force=1' : nextPath);
       router.refresh();
     } catch (caught) {
-      applyError(caught);
-      if (caught instanceof ApiError && caught.code === 'INVALID_CODE') setCode('');
+      setError(errorMessage(caught));
+      if (caught instanceof ApiError) setFields(caught.fields ?? {});
     } finally {
       setBusy(false);
     }
   };
-
-  const handleResend = async () => {
-    setError('');
-    setBusy(true);
-    try {
-      const result = await apiPost<{ sent: true; devCode?: string }>('/auth/resend', {
-        email,
-        purpose: otpPurpose === 'VERIFY_EMAIL' ? 'VERIFY_EMAIL' : 'LOGIN',
-      });
-      setDevCode(result.devCode);
-      setCooldown(60);
-      setInfo('Новий код надіслано.');
-      if (result.devCode) {
-        setCode(result.devCode);
-        setInfo('Новий демо-код заповнено автоматично.');
-      }
-    } catch (caught) {
-      applyError(caught);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (step === 'otp') {
-    return (
-      <>
-        {info ? <p className="form__notice" role="status">{info}</p> : null}
-        <OtpStep
-          email={email}
-          code={code}
-          setCode={setCode}
-          onSubmit={handleOtp}
-          onResend={handleResend}
-          onBack={() => {
-            setStep('credentials');
-            setCode('');
-            setDevCode(undefined);
-            setError('');
-            setInfo('');
-          }}
-          busy={busy}
-          error={error}
-          fieldError={fields.code}
-          cooldown={cooldown}
-          devCode={devCode}
-        />
-      </>
-    );
-  }
 
   return (
     <>
@@ -179,39 +72,42 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           </div>
           <div className="demo-accounts__row">
             <Avatar src="/img/avatars/avatar-03.svg" name="Олена" size="xs" />
-            <span><strong>olena@scene.local</strong> · Demo12345!</span>
-            <button type="button" className="text-button" onClick={() => { setEmail('olena@scene.local'); setPassword('Demo12345!'); }}>
+            <span><strong>@olena</strong> · логін <strong>olena</strong> · Demo12345!</span>
+            <button type="button" className="text-button" onClick={() => { setLogin('olena'); setPassword('Demo12345!'); }}>
               Обрати
             </button>
           </div>
           <div className="demo-accounts__row">
             <Avatar src="/img/avatars/avatar-01.svg" name="Адміністратор" size="xs" />
-            <span><strong>admin@scene.local</strong> · Admin12345!</span>
-            <button type="button" className="text-button" onClick={() => { setEmail('admin@scene.local'); setPassword('Admin12345!'); }}>
+            <span><strong>@admin</strong> · логін <strong>admin</strong> · Admin12345!</span>
+            <button type="button" className="text-button" onClick={() => { setLogin('admin'); setPassword('Admin12345!'); }}>
               Обрати
             </button>
           </div>
         </div>
       ) : null}
 
-      <form className="form auth-form" onSubmit={handleCredentials} noValidate>
+      <form className="form auth-form" onSubmit={submit} noValidate>
         <div className="form__group">
-          <label className="form__label" htmlFor="login-email">Електронна пошта</label>
+          <label className="form__label" htmlFor="login-login">Логін</label>
           <input
-            className={`form__control ${fields.email ? 'is-invalid' : ''}`}
-            id="login-email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            maxLength={254}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            className={`form__control ${fields.login ? 'is-invalid' : ''}`}
+            id="login-login"
+            name="login"
+            type="text"
+            autoComplete="username"
+            maxLength={30}
+            value={login}
+            onChange={(event) => setLogin(event.target.value)}
             required
-            aria-invalid={Boolean(fields.email)}
-            aria-describedby={fields.email ? 'login-email-error' : undefined}
+            aria-invalid={Boolean(fields.login)}
+            aria-describedby={fields.login ? 'login-login-error' : 'login-login-help'}
           />
-          {fields.email ? <p className="form__error" id="login-email-error">{fields.email}</p> : null}
+          {fields.login ? (
+            <p className="form__error" id="login-login-error">{fields.login}</p>
+          ) : (
+            <p className="form__hint" id="login-login-help">Логін — не публічний, його бачите лише ви.</p>
+          )}
         </div>
 
         <div className="form__group">
@@ -236,7 +132,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Приховати пароль' : 'Показати пароль'}
             >
-              <Icon name={showPassword ? 'i-eye' : 'i-eye'} size={18} />
+              <Icon name="i-eye" size={18} />
             </button>
           </div>
           {fields.password ? <p className="form__error" id="login-password-error">{fields.password}</p> : null}
@@ -249,7 +145,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
         </button>
 
         <p className="auth-form__hint">
-          Далі надішлемо одноразовий код на пошту — це захист від несанкціонованого входу.
+          <Link href="/forgot-password">Забули пароль?</Link>
         </p>
       </form>
 

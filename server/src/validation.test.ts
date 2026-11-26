@@ -61,14 +61,17 @@ describe('API schemas', () => {
     expect(createWebinarSchema.safeParse({ ...validWebinar, capacity: 20_000 }).success).toBe(false);
   });
 
-  it('requires a strong password on registration', () => {
+  it('requires public username, private login and a strong password', () => {
     const base = {
-      displayName: 'Олена Ковальчук',
+      username: 'olena',
+      login: 'olena_login',
       email: 'olena@example.com',
       acceptTerms: true,
     };
     expect(registerSchema.safeParse({ ...base, password: 'short' }).success).toBe(false);
     expect(registerSchema.safeParse({ ...base, password: 'alllowercase123' }).success).toBe(false);
     expect(registerSchema.safeParse({ ...base, password: 'StrongPass123' }).success).toBe(true);
+    expect(registerSchema.safeParse({ ...base, username: 'a!' }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...base, login: '1olena' }).success).toBe(false);
   });
 });

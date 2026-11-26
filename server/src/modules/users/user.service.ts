@@ -9,7 +9,7 @@ import {
   users,
   webinars,
 } from '../../db/schema.js';
-import { AppError, badRequest, notFound, unauthorized } from '../../lib/errors.js';
+import { AppError, badRequest, conflict, notFound, unauthorized } from '../../lib/errors.js';
 import { verifyPassword } from '../../lib/security.js';
 import { scanForProfanity } from '../../services/moderation.js';
 import { toAuthUser, type AuthUser } from '../../types/auth.js';
@@ -25,10 +25,21 @@ export const updateProfile = async (
   const [current] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!current || current.status === 'DELETED') throw unauthorized();
 
-  if (input.displayName && scanForProfanity(input.displayName).flagged) {
-    throw new AppError(422, 'INAPPROPRIATE_NAME', 'Ім’я містить неприпустимі вирази.', {
-      fields: { displayName: 'Оберіть інше ім’я.' },
+  if (input.username && scanForProfanity(input.username).flagged) {
+    throw new AppError(422, 'INAPPROPRIATE_USERNAME', 'Юзернейм містить неприпустимі вирази.', {
+      fields: { username: 'Оберіть інший юзернейм.' },
     });
+  }
+
+  if (input.username && input.username !== current.username) {
+    const [taken] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.username, input.username), ne(users.id, userId)))
+      .limit(1);
+    if (taken) {
+      throw conflict('Цей юзернейм уже зайнятий.', { username: 'Юзернейм уже зайнятий.' });
+    }
   }
 
   if (input.bio && scanForProfanity(input.bio).flagged) {
@@ -53,20 +64,27 @@ export const updateProfile = async (
     avatarUrl = null;
   }
 
-  const [updated] = await db
-    .update(users)
-    .set({
-      ...(input.displayName !== undefined ? { displayName: input.displayName } : {}),
-      ...(input.bio !== undefined ? { bio: input.bio } : {}),
-      ...(avatarPreset ? { avatarPreset } : {}),
-      ...(avatarUrl !== undefined ? { avatarUrl } : {}),
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId))
-    .returning();
+  try {
+    const [updated] = await db
+      .update(users)
+      .set({
+        ...(input.username !== undefined ? { username: input.username } : {}),
+        ...(input.bio !== undefined ? { bio: input.bio } : {}),
+        ...(avatarPreset ? { avatarPreset } : {}),
+        ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
 
-  if (!updated) throw notFound('Користувача не знайдено.');
-  return toAuthUser(updated);
+    if (!updated) throw notFound('Користувача не знайдено.');
+    return toAuthUser(updated);
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && String(error.code) === '23505') {
+      throw conflict('Цей юзернейм уже зайнятий.', { username: 'Юзернейм уже зайнятий.' });
+    }
+    throw error;
+  }
 };
 
 export const deleteAccount = async (userId: string, password: string): Promise<void> => {
@@ -106,6 +124,7 @@ export const softDeleteUser = async (userId: string, note: string): Promise<void
   if (current.status === 'DELETED') return;
 
   const now = new Date();
+  const suffix = userId.replaceAll('-', '').slice(0, 20);
 
   await db.transaction(async (tx) => {
     await tx
@@ -123,14 +142,13 @@ export const softDeleteUser = async (userId: string, note: string): Promise<void
       .update(users)
       .set({
         status: 'DELETED',
+        username: `deleted_${suffix}`,
+        login: `deleted_${suffix}`,
         email: `deleted+${userId}@deleted.invalid`,
         passwordHash: '!deleted',
-        displayName: 'Видалений користувач',
         bio: null,
         avatarUrl: null,
         avatarPreset: 'avatar-01',
-        pendingEmail: null,
-        emailVerifiedAt: null,
         mustChangePassword: false,
         lockedUntil: null,
         failedLoginAttempts: 0,

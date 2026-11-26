@@ -3,24 +3,22 @@ import { asyncRoute, parseBody } from '../../lib/http.js';
 import { clearSessionCookie, revokeSession } from '../../services/session.js';
 import {
   authLimiter,
-  loginLimiter,
   noStore,
-  otpLimiter,
+  passwordResetLimiter,
   registerLimiter,
+  loginLimiter,
 } from '../../middleware/rateLimit.js';
 import {
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
-  resendCodeSchema,
-  verifyEmailSchema,
-  verifyLoginSchema,
+  resetPasswordSchema,
 } from './auth.schemas.js';
 import {
-  login,
+  loginUser,
   registerUser,
-  resendCode,
-  verifyEmail,
-  verifyLogin,
+  requestPasswordReset,
+  resetPassword,
 } from './auth.service.js';
 
 export const authRouter = Router();
@@ -32,18 +30,8 @@ authRouter.post(
   registerLimiter,
   asyncRoute(async (req, res) => {
     const input = parseBody(registerSchema, req);
-    const result = await registerUser(input);
+    const result = await registerUser(input, req, res);
     res.status(201).json({ data: result });
-  }),
-);
-
-authRouter.post(
-  '/verify-email',
-  otpLimiter,
-  asyncRoute(async (req, res) => {
-    const input = parseBody(verifyEmailSchema, req);
-    const result = await verifyEmail(input, req, res);
-    res.json({ data: result });
   }),
 );
 
@@ -52,28 +40,28 @@ authRouter.post(
   loginLimiter,
   asyncRoute(async (req, res) => {
     const input = parseBody(loginSchema, req);
-    const result = await login(input);
+    const result = await loginUser(input, req, res);
     res.json({ data: result });
   }),
 );
 
 authRouter.post(
-  '/login/verify',
-  otpLimiter,
+  '/password/forgot',
+  passwordResetLimiter,
   asyncRoute(async (req, res) => {
-    const input = parseBody(verifyLoginSchema, req);
-    const result = await verifyLogin(input, req, res);
+    const input = parseBody(forgotPasswordSchema, req);
+    const result = await requestPasswordReset(input);
     res.json({ data: result });
   }),
 );
 
 authRouter.post(
-  '/resend',
-  otpLimiter,
+  '/password/reset',
+  passwordResetLimiter,
   asyncRoute(async (req, res) => {
-    const input = parseBody(resendCodeSchema, req);
-    const result = await resendCode(input);
-    res.json({ data: result });
+    const input = parseBody(resetPasswordSchema, req);
+    await resetPassword(input);
+    res.json({ data: { ok: true } });
   }),
 );
 

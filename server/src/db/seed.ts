@@ -22,31 +22,39 @@ const addDays = (days: number, hour = 19, minute = 0): Date => {
 const addMinutes = (minutes: number): Date => new Date(Date.now() + minutes * 60_000);
 
 const seedAdmin = async (): Promise<void> => {
-  const [existing] = await db.select().from(users).where(eq(users.email, env.ADMIN_EMAIL)).limit(1);
+  const adminUsername = env.ADMIN_USERNAME.trim().toLowerCase();
+  const adminLogin = env.ADMIN_LOGIN.trim().toLowerCase();
+  const adminEmail = env.ADMIN_EMAIL.trim().toLowerCase();
+  const handlePattern = /^[a-z][a-z0-9_]{2,29}$/;
+
+  if (!handlePattern.test(adminUsername) || !handlePattern.test(adminLogin)) {
+    throw new Error('ADMIN_USERNAME and ADMIN_LOGIN must be 3–30 chars: a-z, 0-9, _ and start with a letter.');
+  }
+
+  const [existing] = await db.select().from(users).where(eq(users.email, adminEmail)).limit(1);
 
   if (existing) {
     if (existing.role !== 'ADMIN') {
       await db.update(users).set({ role: 'ADMIN', updatedAt: new Date() }).where(eq(users.id, existing.id));
-      console.log(`Promoted ${env.ADMIN_EMAIL} to ADMIN.`);
+      console.log(`Promoted ${adminEmail} to ADMIN.`);
     }
-    console.log(`Admin already exists: ${env.ADMIN_EMAIL}`);
+    console.log(`Admin already exists: ${adminEmail}`);
     return;
   }
 
   const passwordHash = await hashPassword(env.ADMIN_PASSWORD);
-  const now = new Date();
 
   await db.insert(users).values({
-    email: env.ADMIN_EMAIL,
+    username: adminUsername,
+    login: adminLogin,
+    email: adminEmail,
     passwordHash,
-    displayName: env.ADMIN_NAME,
     role: 'ADMIN',
     status: 'ACTIVE',
-    emailVerifiedAt: now,
     avatarPreset: 'avatar-01',
   });
 
-  console.log(`Admin created: ${env.ADMIN_EMAIL}`);
+  console.log(`Admin created: @${adminUsername} (login: ${adminLogin}, email: ${adminEmail})`);
   if (!isProduction) {
     console.log(`Development admin password: ${env.ADMIN_PASSWORD}`);
   }
@@ -54,8 +62,9 @@ const seedAdmin = async (): Promise<void> => {
 
 interface DemoUser {
   id: string;
+  username: string;
+  login: string;
   email: string;
-  displayName: string;
   avatarPreset: string;
 }
 
@@ -68,49 +77,48 @@ const seedDemo = async (): Promise<void> => {
   }
 
   const passwordHash = await hashPassword(env.DEMO_PASSWORD);
-  const now = new Date();
 
   const demoUsers = await db
     .insert(users)
     .values([
       {
+        username: 'olena',
+        login: 'olena',
         email: demoEmails[0]!,
         passwordHash,
-        displayName: 'Олена Ковальчук',
         bio: 'Продюсерка освітніх програм і ведуча онлайн-заходів.',
         avatarPreset: 'avatar-03',
         status: 'ACTIVE',
-        emailVerifiedAt: now,
       },
       {
+        username: 'maksym',
+        login: 'maksym',
         email: demoEmails[1]!,
         passwordHash,
-        displayName: 'Максим Бондаренко',
         bio: 'Продуктовий дизайнер, викладач UX-практик.',
         avatarPreset: 'avatar-05',
         status: 'ACTIVE',
-        emailVerifiedAt: now,
       },
       {
+        username: 'iryna',
+        login: 'iryna',
         email: demoEmails[2]!,
         passwordHash,
-        displayName: 'Ірина Мельник',
         bio: 'Маркетологиня, авторка курсу про контент без вигорання.',
         avatarPreset: 'avatar-02',
         status: 'ACTIVE',
-        emailVerifiedAt: now,
       },
       {
+        username: 'andriy',
+        login: 'andriy',
         email: demoEmails[3]!,
         passwordHash,
-        displayName: 'Андрій Шевчук',
         bio: 'Викладач, спікер про кар’єру та публічні виступи.',
         avatarPreset: 'avatar-07',
         status: 'ACTIVE',
-        emailVerifiedAt: now,
       },
     ])
-    .returning({ id: users.id, email: users.email, displayName: users.displayName, avatarPreset: users.avatarPreset });
+    .returning({ id: users.id, username: users.username, login: users.login, email: users.email, avatarPreset: users.avatarPreset });
 
   const [olena, maksym, iryna, andriy] = demoUsers as [DemoUser, DemoUser, DemoUser, DemoUser];
 
@@ -470,7 +478,7 @@ const seedDemo = async (): Promise<void> => {
   console.log('Demo data created.');
   console.log(`Demo accounts (password: ${env.DEMO_PASSWORD}):`);
   for (const demoUser of demoUsers) {
-    console.log(`  - ${demoUser.email} (${demoUser.displayName})`);
+    console.log(`  - @${demoUser.username} | login: ${demoUser.login} | email: ${demoUser.email}`);
   }
   console.log(`Demo webinars: ${createdWebinars.length}; favorites and registrations included.`);
 };
@@ -480,8 +488,14 @@ const run = async (): Promise<void> => {
     if (env.SEED_DEMO) {
       throw new Error('SEED_DEMO must be false in production.');
     }
-    if (env.ADMIN_PASSWORD === 'Admin12345!' || env.ADMIN_EMAIL.endsWith('.local')) {
-      throw new Error('Set a strong ADMIN_PASSWORD and a real ADMIN_EMAIL before seeding production.');
+    if (
+      env.ADMIN_PASSWORD === 'Admin12345!' ||
+      env.ADMIN_EMAIL.endsWith('.local') ||
+      env.ADMIN_LOGIN === 'admin'
+    ) {
+      throw new Error(
+        'Set a strong ADMIN_PASSWORD, a unique ADMIN_LOGIN and a real ADMIN_EMAIL before seeding production.',
+      );
     }
   }
 

@@ -84,9 +84,9 @@ export default function Header() {
                     <Icon name="i-shield" size={18} />
                   </Link>
                 ) : null}
-                <Link href="/profile" className="header-user" aria-label={`Профіль ${user.displayName}`}>
-                  <Avatar src={user.avatarUrl} name={user.displayName} size="xs" />
-                  <span className="header-user__name">{user.displayName.split(' ')[0]}</span>
+                <Link href="/profile" className="header-user" aria-label={`Профіль @${user.username}`}>
+                  <Avatar src={user.avatarUrl} name={user.username} size="xs" />
+                  <span className="header-user__name">@{user.username}</span>
                 </Link>
                 <button type="button" className="header-icon-link" onClick={() => void logout()} aria-label="Вийти" title="Вийти">
                   <Icon name="i-logout" size={18} />
@@ -124,10 +124,10 @@ export default function Header() {
 
         {user ? (
           <div className="mobile-nav__user">
-            <Avatar src={user.avatarUrl} name={user.displayName} size="md" />
+            <Avatar src={user.avatarUrl} name={user.username} size="md" />
             <div>
-              <p className="mobile-nav__user-name">{user.displayName}</p>
-              <p className="mobile-nav__user-email">{user.email}</p>
+              <p className="mobile-nav__user-name">@{user.username}</p>
+              <p className="mobile-nav__user-email">Логін: {user.login}</p>
             </div>
           </div>
         ) : null}

@@ -57,7 +57,7 @@ interface WebinarRow {
   cancelledAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  ownerName: string;
+  ownerUsername: string;
   ownerAvatar: string;
   ownerBio: string | null;
   ownerStatus: User['status'];
@@ -69,7 +69,7 @@ interface WebinarRow {
 
 export interface WebinarOwner {
   id: string;
-  displayName: string;
+  username: string;
   avatarUrl: string;
   bio?: string | null;
 }
@@ -139,7 +139,7 @@ const selection = (viewerId: string) => ({
   cancelledAt: webinars.cancelledAt,
   createdAt: webinars.createdAt,
   updatedAt: webinars.updatedAt,
-  ownerName: users.displayName,
+  ownerUsername: users.username,
   ownerAvatar: sql<string>`coalesce(${users.avatarUrl}, '/img/avatars/' || ${users.avatarPreset} || '.svg')`,
   ownerBio: users.bio,
   ownerStatus: users.status,
@@ -200,7 +200,7 @@ const toCard = (row: WebinarRow, viewer: AuthUser | null): WebinarCard => {
     canCancel: canManage && (row.status === 'UPCOMING' || row.status === 'LIVE'),
     owner: {
       id: row.ownerId,
-      displayName: row.ownerName,
+      username: row.ownerUsername,
       avatarUrl: row.ownerAvatar,
     },
     createdAt: row.createdAt.toISOString(),
@@ -260,7 +260,7 @@ const buildConditions = (options: {
     const search = or(
       ilike(webinars.title, query),
       ilike(webinars.description, query),
-      ilike(users.displayName, query),
+      ilike(users.username, query),
     );
     if (search) conditions.push(search);
   }

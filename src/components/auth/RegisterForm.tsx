@@ -4,24 +4,18 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { OtpStep } from '@/components/auth/OtpStep';
 import { Icon } from '@/components/ui/Icon';
 import { apiPost, ApiError, errorMessage } from '@/lib/api';
 import {
   isValidEmail,
+  isValidHandle,
   passwordChecks,
   passwordIsStrong,
   passwordScore,
 } from '@/lib/format';
 import type { User } from '@/lib/types';
 
-interface RegisterStepOne {
-  email: string;
-  requiresVerification: true;
-  devCode?: string;
-}
-
-interface VerifyResult {
+interface RegisterResult {
   user: User;
   mustChangePassword: boolean;
 }
@@ -29,20 +23,16 @@ interface VerifyResult {
 export function RegisterForm() {
   const router = useRouter();
   const { user, loading, setUser } = useAuth();
-  const [step, setStep] = useState<'form' | 'otp'>('form');
-  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [login, setLogin] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState('');
-  const [devCode, setDevCode] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [fields, setFields] = useState<Record<string, string>>({});
-  const [cooldown, setCooldown] = useState(0);
-  const [info, setInfo] = useState('');
 
   const strength = passwordScore(password);
   const checks = passwordChecks(password);
@@ -51,16 +41,14 @@ export function RegisterForm() {
     if (!loading && user) router.replace('/events');
   }, [loading, user, router]);
 
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
-    return () => window.clearInterval(timer);
-  }, [cooldown]);
-
   const validate = (): boolean => {
     const nextFields: Record<string, string> = {};
-    if (displayName.trim().length < 2) nextFields.displayName = 'Введіть ім’я (мінімум 2 символи).';
-    if (displayName.trim().length > 60) nextFields.displayName = 'Ім’я має містити не більше 60 символів.';
+    if (!isValidHandle(username)) {
+      nextFields.username = 'Юзернейм: 3–30 символів, латиниця, цифри або підкреслення.';
+    }
+    if (!isValidHandle(login)) {
+      nextFields.login = 'Логін: 3–30 символів, латиниця, цифри або підкреслення.';
+    }
     if (!isValidEmail(email)) nextFields.email = 'Введіть коректну електронну пошту.';
     if (!passwordIsStrong(password)) nextFields.password = 'Пароль не відповідає вимогам безпеки.';
     if (confirm !== password) nextFields.confirm = 'Паролі не збігаються.';
@@ -69,25 +57,23 @@ export function RegisterForm() {
     return Object.keys(nextFields).length === 0;
   };
 
-  const handleRegister = async (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     if (!validate()) return;
 
     setBusy(true);
     try {
-      const result = await apiPost<RegisterStepOne>('/auth/register', {
-        displayName: displayName.trim(),
+      const result = await apiPost<RegisterResult>('/auth/register', {
+        username: username.trim().toLowerCase(),
+        login: login.trim().toLowerCase(),
         email: email.trim().toLowerCase(),
         password,
         acceptTerms,
       });
-      setEmail(result.email);
-      setDevCode(result.devCode);
-      if (result.devCode) setCode(result.devCode);
-      setStep('otp');
-      setCooldown(60);
-      setInfo('Код підтвердження надіслано на пошту.');
+      setUser(result.user);
+      router.push('/events');
+      router.refresh();
     } catch (caught) {
       setError(errorMessage(caught));
       if (caught instanceof ApiError) setFields(caught.fields ?? {});
@@ -96,102 +82,49 @@ export function RegisterForm() {
     }
   };
 
-  const handleVerify = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError('');
-    if (code.length !== 6) {
-      setFields({ code: 'Код має містити 6 цифр.' });
-      return;
-    }
-    setBusy(true);
-    try {
-      const result = await apiPost<VerifyResult>('/auth/verify-email', { email, code });
-      setUser(result.user);
-      router.push('/events');
-      router.refresh();
-    } catch (caught) {
-      setError(errorMessage(caught));
-      if (caught instanceof ApiError) {
-        setFields(caught.fields ?? {});
-        if (caught.code === 'INVALID_CODE') setCode('');
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setError('');
-    setBusy(true);
-    try {
-      const result = await apiPost<{ sent: true; devCode?: string }>('/auth/resend', {
-        email,
-        purpose: 'VERIFY_EMAIL',
-      });
-      setCooldown(60);
-      setDevCode(result.devCode);
-      setInfo('Новий код надіслано.');
-      if (result.devCode) {
-        setCode(result.devCode);
-        setInfo('Новий демо-код заповнено автоматично.');
-      }
-    } catch (caught) {
-      setError(errorMessage(caught));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (step === 'otp') {
-    return (
-      <>
-        {info ? <p className="form__notice" role="status">{info}</p> : null}
-        <OtpStep
-          email={email}
-          code={code}
-          setCode={setCode}
-          onSubmit={handleVerify}
-          onResend={handleResend}
-          onBack={() => {
-            setStep('form');
-            setCode('');
-            setDevCode(undefined);
-            setError('');
-            setFields({});
-          }}
-          busy={busy}
-          error={error}
-          fieldError={fields.code}
-          cooldown={cooldown}
-          devCode={devCode}
-        />
-      </>
-    );
-  }
-
   return (
     <>
-      <form className="form auth-form" onSubmit={handleRegister} noValidate>
+      <form className="form auth-form" onSubmit={submit} noValidate>
         <div className="form__group">
-          <label className="form__label" htmlFor="register-name">Ім’я та прізвище</label>
+          <label className="form__label" htmlFor="register-username">Юзернейм <span className="form__hint">(публічний)</span></label>
           <input
-            className={`form__control ${fields.displayName ? 'is-invalid' : ''}`}
-            id="register-name"
-            name="displayName"
+            className={`form__control ${fields.username ? 'is-invalid' : ''}`}
+            id="register-username"
+            name="username"
             type="text"
-            autoComplete="name"
-            maxLength={60}
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
+            autoComplete="nickname"
+            maxLength={30}
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
             required
-            aria-invalid={Boolean(fields.displayName)}
-            aria-describedby={fields.displayName ? 'register-name-error' : undefined}
+            aria-invalid={Boolean(fields.username)}
+            aria-describedby="register-username-help"
           />
-          {fields.displayName ? <p className="form__error" id="register-name-error">{fields.displayName}</p> : null}
+          <p className="form__hint" id="register-username-help">Його бачать інші користувачі. 3–30 символів, латиниця, цифри, _. </p>
+          {fields.username ? <p className="form__error">{fields.username}</p> : null}
         </div>
 
         <div className="form__group">
-          <label className="form__label" htmlFor="register-email">Електронна пошта</label>
+          <label className="form__label" htmlFor="register-login">Логін <span className="form__hint">(приватний)</span></label>
+          <input
+            className={`form__control ${fields.login ? 'is-invalid' : ''}`}
+            id="register-login"
+            name="login"
+            type="text"
+            autoComplete="username"
+            maxLength={30}
+            value={login}
+            onChange={(event) => setLogin(event.target.value)}
+            required
+            aria-invalid={Boolean(fields.login)}
+            aria-describedby="register-login-help"
+          />
+          <p className="form__hint" id="register-login-help">Потрібен для входу. Інші користувачі його не бачать.</p>
+          {fields.login ? <p className="form__error">{fields.login}</p> : null}
+        </div>
+
+        <div className="form__group">
+          <label className="form__label" htmlFor="register-email">Електронна пошта <span className="form__hint">(приватна)</span></label>
           <input
             className={`form__control ${fields.email ? 'is-invalid' : ''}`}
             id="register-email"
@@ -204,9 +137,10 @@ export function RegisterForm() {
             onChange={(event) => setEmail(event.target.value)}
             required
             aria-invalid={Boolean(fields.email)}
-            aria-describedby={fields.email ? 'register-email-error' : undefined}
+            aria-describedby="register-email-help"
           />
-          {fields.email ? <p className="form__error" id="register-email-error">{fields.email}</p> : null}
+          <p className="form__hint" id="register-email-help">Потрібна лише для відновлення пароля; листи не надсилаються.</p>
+          {fields.email ? <p className="form__error">{fields.email}</p> : null}
         </div>
 
         <div className="form__group">

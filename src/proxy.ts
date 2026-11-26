@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const SESSION_COOKIE = 'scene_session';
 const PROTECTED_PATHS = ['/events', '/create', '/profile', '/admin'];
-const AUTH_PATHS = ['/login', '/register'];
+const AUTH_PATHS = ['/login', '/register', '/forgot-password'];
 
 const matchesPath = (pathname: string, paths: string[]): boolean =>
   paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));

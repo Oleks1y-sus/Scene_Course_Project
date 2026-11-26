@@ -1,8 +1,8 @@
 # Сцена — платформа інтерактивних онлайн-заходів
 
-Повноцінний full-stack курсовий проєкт: сучасний Next.js-фронтенд, власний REST API на Express, PostgreSQL у Supabase, Drizzle ORM, автентифікація з одноразовими кодами на пошту (Resend), модерація, скарги, обране, реєстрації та адмінпанель.
+Повноцінний full-stack курсовий проєкт: Next.js-фронтенд, власний REST API на Express, PostgreSQL у Supabase, Drizzle ORM, автентифікація за логіном і паролем, відновлення пароля, модерація, скарги, обране, реєстрації та адмінпанель.
 
-> **Демо-режим.** «Прямий ефір» — це демонстраційний статус: кнопки «Розпочати» / «Завершити» змінюють стан заходу в базі. Відеострімінгу немає (це не Zoom/Meet).
+> **Демо-режим.** «Прямий ефір» — це демонстраційний статус: кнопки «Розпочати» / «Завершити» змінюють стан заходу в базі. Відеострімінгу немає (це не Zoom/Meet). Листи електронною поштою **не надсилаються**.
 
 ## Стек
 
@@ -11,8 +11,7 @@
 | Фронтенд | Next.js 16 (App Router, React 19), TypeScript, власний CSS (mobile-first, Flexbox/Grid), SVG-sprite |
 | Бекенд | Node.js 20+, Express 5, TypeScript, Drizzle ORM, Zod |
 | БД | PostgreSQL (Supabase), 9 пов’язаних таблиць, SQL-міграції |
-| Автентифікація | Власні сесії (HttpOnly cookie), Argon2id, 6-значні коди на email, rate limiting, блокування після невдалих спроб |
-| Пошта | Resend (у dev — консольний транспорт) |
+| Автентифікація | Власні сесії (HttpOnly cookie), Argon2id, логін + пароль, одноразовий токен відновлення пароля, rate limiting |
 | Файли | Multer + Sharp (WebP, перевірка magic bytes), Supabase Storage або локальний диск |
 | Деплой | Vercel (фронтенд) + Render (API) + Supabase (БД/Storage) |
 
@@ -38,7 +37,9 @@ Supabase: PostgreSQL + Storage
 | Маршрут | Призначення | Доступ |
 | --- | --- | --- |
 | `/` | Головна (збережена верстка) | публічно |
-| `/login`, `/register` | Вхід / реєстрація з OTP-кодом | публічно |
+| `/login` | Вхід за логіном і паролем | публічно |
+| `/register` | Реєстрація: юзернейм, логін, пошта, пароль | публічно |
+| `/forgot-password` | Відновлення пароля за логіном + поштою | публічно |
 | `/events` | Каталог: пошук, фільтри, сортування, пагінація, обране | після входу |
 | `/events/[id]` | Деталі, реєстрація, скарга, керування ефіром | після входу |
 | `/events/[id]/edit` | Редагування власного заходу | власник/адмін |
@@ -50,10 +51,14 @@ Supabase: PostgreSQL + Storage
 
 ## Основні можливості
 
-- Реєстрація/вхід/вихід; підтвердження пошти; вхід за паролем + одноразовим кодом на email.
-- Профіль: ім’я, біо, аватар (8 пресетів або завантажене фото), зміна пошти з підтвердженням, зміна пароля, видалення акаунта.
+- Реєстрація з **юзернеймом, логіном, поштою та паролем**; вхід одразу після реєстрації. Листи не надсилаються.
+- Перевірка унікальності: не можна зайняти чужий юзернейм, логін або пошту — користувач бачить конкретне поле з помилкою.
+- Публічно видно **лише юзернейм**; логін, пошта й пароль — приватні. Логін і пошту бачить лише власник у профілі. Пароль не зберігається у відкритому вигляді.
+- Вхід за логіном і паролем; після 5 невдалих спроб — блокування на 15 хвилин.
+- Відновлення пароля: логін + пошта → одноразовий токен на 15 хвилин → новий пароль; усі сесії після цього завершуються. **Лист не надсилається.**
+- Профіль: юзернейм, біо, аватар (8 пресетів або завантажене фото), зміна пошти з поточним паролем, зміна пароля, видалення акаунта.
 - Статистика: створені заходи за статусами, скільки разів додали в обране, реєстрації, відвідування.
-- Каталог: пошук за назвою/описом/спікером, категорії, статуси (за замовчуванням завершені та скасовані приховані), сортування, пагінація.
+- Каталог: пошук за назвою/описом/юзернеймом, категорії, статуси (за замовчуванням завершені та скасовані приховані), сортування, пагінація.
 - Обране та реєстрація на захід; власний захід не можна додати в обране чи зареєструватися на нього.
 - Статуси заходу: `UPCOMING`, `LIVE`, `COMPLETED`, `CANCELLED`; власник запускає та завершує демо-ефір.
 - Скарги на заходи й користувачів; не можна скаржитися на власний захід/себе; повторна відкрита скарга відсікається.
@@ -61,7 +66,7 @@ Supabase: PostgreSQL + Storage
 - Адмінпанель: черга скарг, приховати/відновити захід, тіньовий бан/блокування/активація користувача, видалення, створення нових адміністраторів, журнал дій.
 - Тіньовий бан: контент зникає з публічного каталогу; користувач не отримує публічного повідомлення про причину.
 - Правило «немає користувача — немає заходів»: видалення/блокування власника приховує всі його заходи, видалення акаунта скасовує їх.
-- Email-розсилка: OTP-коди, запрошення адміністратора з тимчасовим паролем.
+- Адміністратор створює нового адміна з юзернеймом, логіном, поштою й тимчасовим паролем. Дані показуються один раз; після першого входу система вимагає змінити пароль.
 - Завантаження зображень: JPEG/PNG/WebP ≤ 2 МБ, перевірка сигнатури файлу, перекодування у WebP, зняття метаданих, захист від SVG/polyglot.
 - Mobile-first, burger-меню, адаптивні сітки, доступність (підписи, `aria-*`, фокус, контраст).
 - SEO: унікальні `title`/`description`, `lang="uk"`, Open Graph, семантичні заголовки, favicon, `robots noindex` для приватних сторінок.
@@ -70,10 +75,10 @@ Supabase: PostgreSQL + Storage
 
 - Паролі — **Argon2id** (memory 19 MiB, 2 iterations). У БД зберігається лише хеш.
 - Сесії — випадковий 256-бітний токен; у БД зберігається HMAC-SHA256-хеш. Cookie: `HttpOnly`, `Secure` (у production), `SameSite=Lax`, термін 7 днів, відкликання на сервері.
-- OTP-коди — HMAC-SHA256 з пепером, TTL 10 хв, максимум 5 спроб, повторне надсилання не частіше 60 с, старі коди інвалідуються.
-- Блокування акаунта на 15 хв після 5 невдалих паролів; однакові повідомлення про помилку для неіснуючої пошти та невірного пароля.
+- Відновлення пароля — випадковий 256-бітний токен, у БД зберігається HMAC-хеш; TTL 15 хвилин, одноразовий, після скидання всі сесії відкликаються.
+- Блокування акаунта на 15 хв після 5 невдалих паролів; однакові повідомлення про помилку для неіснуючого логіна та невірного пароля.
 - CSRF: SameSite=Lax + перевірка `Origin`/`Referer` для всіх небезпечних методів.
-- Rate limiting: глобальний, авторизація, OTP, реєстрація, скарги, завантаження, адмін-мутації.
+- Rate limiting: глобальний, авторизація, реєстрація, відновлення пароля, скарги, завантаження, адмін-мутації.
 - Серверна валідація Zod для кожного тіла/query; обмеження розмірів, заборона HTML-символів, нормалізація Unicode, перевірка типів.
 - SQL-ін’єкції: лише параметризовані запити Drizzle; `ILIKE`-пошук екранує `%`, `_`, `\`.
 - XSS: React екранує вивід, HTML у текстах заборонено на сервері, немає `dangerouslySetInnerHTML`; CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS.
@@ -81,6 +86,8 @@ Supabase: PostgreSQL + Storage
 - Завантаження файлів: MIME + magic bytes, ліміт 2 МБ, Sharp-перекодування, випадкові імена, власник файлу перевіряється при прикріпленні.
 - Секрети — лише в env; `.env*` у `.gitignore`, є `.env.example`.
 - Публічні запити не бачать `PENDING`/`HIDDEN` заходи, власник бачить свої з позначкою «На модерації».
+
+> **Компроміс відновлення без листа.** Оскільки листи не надсилаються, доступ до зміни пароля підтверджується парою «логін + пошта». Це означає, що той, хто знає обидва значення, може змінити пароль. Це свідомий вибір для курсового проєкту без поштового домену; ризик зменшено rate limiting, коротким TTL токена та завершенням усіх сесій. Для production-рівня краще повернути email-підтвердження.
 
 ## Локальний запуск
 
@@ -95,7 +102,6 @@ npm --prefix server install
 cp .env.example .env.local              # Windows: Copy-Item
 cp server/.env.example server/.env
 # Для локального демо залиште DATABASE_URL=pglite у server/.env
-# і додайте NEXT_PUBLIC_DEMO_MODE=true у .env.local
 
 # 3. Міграції та демо-дані (PGlite, без Docker)
 npm run server:migrate
@@ -110,15 +116,15 @@ npm run dev        # http://localhost:3000
 
 ### Демо-акаунти (після `npm run server:seed`)
 
-| Роль | Пошта | Пароль |
-| --- | --- | --- |
-| ADMIN | `admin@scene.local` | `Admin12345!` |
-| USER | `olena@scene.local` | `Demo12345!` |
-| USER | `maksym@scene.local` | `Demo12345!` |
-| USER | `iryna@scene.local` | `Demo12345!` |
-| USER | `andriy@scene.local` | `Demo12345!` |
+| Роль | Юзернейм | Логін | Пошта | Пароль |
+| --- | --- | --- | --- | --- |
+| ADMIN | `@admin` | `admin` | `admin@scene.local` | `Admin12345!` |
+| USER | `@olena` | `olena` | `olena@scene.local` | `Demo12345!` |
+| USER | `@maksym` | `maksym` | `maksym@scene.local` | `Demo12345!` |
+| USER | `@iryna` | `iryna` | `iryna@scene.local` | `Demo12345!` |
+| USER | `@andriy` | `andriy` | `andriy@scene.local` | `Demo12345!` |
 
-> Після пароля система попросить 6-значний код. У dev він друкується в консоль API та повертається як `devCode` (якщо `EXPOSE_DEV_CODES=true`), тому фронтенд підставляє його автоматично. У production `EXPOSE_DEV_CODES=false`, код приходить лише на пошту.
+Для входу використовуйте **логін** (не юзернейм) і пароль. `NEXT_PUBLIC_DEMO_MODE=true` показує підказку з демо-акаунтами на `/login`; у production — `false`.
 
 ## Змінні середовища
 
@@ -135,11 +141,11 @@ npm run dev        # http://localhost:3000
 Повний перелік — у [`server/.env.example`](server/.env.example). Ключові:
 
 - `DATABASE_URL` — Supabase PostgreSQL (session pooler, `sslmode=require`), `DATABASE_SSL=true`.
-- `FRONTEND_URL` — точний origin фронтенду (CORS + посилання в листах).
-- `SESSION_PEPPER`, `OTP_PEPPER`, `IP_PEPPER` — випадкові рядки 48+ байт.
-- `COOKIE_SECURE=true`, `MAIL_MODE=resend`, `RESEND_API_KEY`, `RESEND_FROM`.
+- `FRONTEND_URL` — точний origin фронтенду (CORS + посилання).
+- `SESSION_PEPPER`, `IP_PEPPER` — випадкові рядки 48+ байт.
+- `COOKIE_SECURE=true`.
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`.
-- `ADMIN_EMAIL`, `ADMIN_PASSWORD` — для першого сіду.
+- `ADMIN_USERNAME`, `ADMIN_LOGIN`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` — лише для першого сіду.
 
 ## Деплой
 
@@ -147,16 +153,19 @@ npm run dev        # http://localhost:3000
 
 Коротко:
 
-1. **Supabase** — створіть проєкт, візьміть connection string, виконайте `npm run server:migrate` з production-`DATABASE_URL`, створіть публічний bucket `scene-media`.
-2. **Render** — New Web Service, root directory `server`, build `npm install && npm run build`, start `npm run start`, додайте env, health check `/health`.
-3. **Vercel** — імпортуйте репозиторій, root — корінь, env `API_ORIGIN` = URL Render, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_DEMO_MODE=false`.
-4. **Resend** — підтвердіть домен, вкажіть `RESEND_FROM`.
+1. **GitHub** — запуште код (без `.env`).
+2. **Supabase** — створіть проєкт, виконайте `npm run server:migrate`, створіть публічний bucket `scene-media`.
+3. **Render** — Web Service, root `server`, build `npm ci --include=dev && npm run build`, start `npm run start`, env.
+4. **Vercel** — імпорт репозиторію, root — корінь, `API_ORIGIN` = URL Render, `NEXT_PUBLIC_SITE_URL` = URL Vercel.
+5. Оновіть `FRONTEND_URL` на Render після отримання URL Vercel і перезапустіть API.
+
+Поштовий сервіс (Resend) більше не використовується. Домен і DNS не потрібні.
 
 ## API
 
 Префікс `/api/v1`. Повний перелік — у [`server/README.md`](server/README.md). Основне:
 
-- `POST /auth/register`, `/auth/login`, `/auth/login/verify`, `/auth/resend`, `/auth/logout`, `GET /auth/me`
+- `POST /auth/register`, `/auth/login`, `/auth/password/forgot`, `/auth/password/reset`, `/auth/logout`, `GET /auth/me`
 - `GET /webinars`, `GET /webinars/:id`, `POST /webinars`, `PATCH/DELETE /webinars/:id`
 - `POST /webinars/:id/start|end|cancel|favorite|register`
 - `GET/PATCH /users/me`, `/users/me/stats`, `/users/me/email`, `/users/me/password`
@@ -171,7 +180,7 @@ npm run dev        # http://localhost:3000
 npm run typecheck          # TypeScript фронтенду
 npm run lint               # ESLint
 npm run build              # production build Next.js
-npm run server:typecheck   # TypeScript API (додано в CI)
+npm run server:typecheck   # TypeScript API
 npm run server:test        # Vitest: модерація, валідація, схеми
 ```
 
@@ -203,6 +212,7 @@ CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 ## Обмеження та що можна покращити
 
 - Демо-ефір не є реальним відеострімінгом (свідоме обмеження завдання).
+- Відновлення пароля без листа підтверджується парою «логін + пошта»; для production-рівня варто повернути email-підтвердження.
 - Rate limiting зберігається в пам’яті процесу; для кількох інстансів Render варто підключити Redis.
 - CSP містить `'unsafe-inline'` для скриптів через особливості Next.js; у майбутньому — nonce-based CSP.
 - Для повного production-рівня варто додати Redis, черги листів, S3 lifecycle policy та моніторинг (Sentry).

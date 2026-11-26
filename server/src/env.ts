@@ -23,23 +23,17 @@ const envSchema = z.object({
   COOKIE_SECURE: bool.default(false),
 
   SESSION_PEPPER: z.string().min(32).default('dev-only-session-pepper-change-me-please-123456789'),
-  OTP_PEPPER: z.string().min(32).default('dev-only-otp-pepper-change-me-please-123456789'),
   IP_PEPPER: z.string().min(32).default('dev-only-ip-pepper-change-me-please-123456789'),
-
-  MAIL_MODE: z.enum(['console', 'resend']).default('console'),
-  RESEND_API_KEY: z.string().default(''),
-  RESEND_FROM: z.string().default('Сцена <no-reply@scene.example>'),
-  SUPPORT_EMAIL: z.email().default('support@scene.example'),
-  EXPOSE_DEV_CODES: bool.default(true),
 
   SUPABASE_URL: z.string().default(''),
   SUPABASE_SERVICE_ROLE_KEY: z.string().default(''),
   SUPABASE_STORAGE_BUCKET: z.string().default('scene-media'),
   UPLOAD_DIR: z.string().default('./uploads'),
 
+  ADMIN_USERNAME: z.string().min(3).max(30).default('admin'),
+  ADMIN_LOGIN: z.string().min(3).max(30).default('admin'),
   ADMIN_EMAIL: z.email().default('admin@scene.local'),
   ADMIN_PASSWORD: z.string().min(10).default('Admin12345!'),
-  ADMIN_NAME: z.string().min(2).max(60).default('Адміністратор'),
   SEED_DEMO: bool.default(true),
   DEMO_PASSWORD: z.string().min(10).default('Demo12345!'),
 
@@ -74,14 +68,8 @@ if (isProduction) {
   if (env.DATABASE_URL === 'pglite') {
     throw new Error('DATABASE_URL=pglite is not allowed in production. Configure Supabase PostgreSQL.');
   }
-  if (env.SESSION_PEPPER.startsWith('dev-only') || env.OTP_PEPPER.startsWith('dev-only')) {
-    throw new Error('Replace the development session/OTP peppers before running in production.');
-  }
-  if (env.MAIL_MODE !== 'resend' || !env.RESEND_API_KEY) {
-    throw new Error('Production requires MAIL_MODE=resend and a valid RESEND_API_KEY.');
-  }
-  if (env.EXPOSE_DEV_CODES) {
-    throw new Error('EXPOSE_DEV_CODES must be false in production.');
+  if (env.SESSION_PEPPER.startsWith('dev-only')) {
+    throw new Error('Replace the development session pepper before running in production.');
   }
   if (!env.COOKIE_SECURE) {
     throw new Error('COOKIE_SECURE must be true in production.');

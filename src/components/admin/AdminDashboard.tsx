@@ -129,12 +129,18 @@ export function AdminDashboard() {
   const [confirmBusy, setConfirmBusy] = useState(false);
 
   const [createAdminOpen, setCreateAdminOpen] = useState(false);
-  const [adminName, setAdminName] = useState('');
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminLogin, setAdminLogin] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminBusy, setAdminBusy] = useState(false);
   const [adminError, setAdminError] = useState('');
-  const [adminResult, setAdminResult] = useState<{ temporaryPassword: string; emailSent: boolean; email: string } | null>(null);
+  const [adminResult, setAdminResult] = useState<{
+    temporaryPassword: string;
+    username: string;
+    login: string;
+    email: string;
+  } | null>(null);
 
   const refresh = useCallback(() => setReloadKey((value) => value + 1), []);
 
@@ -308,17 +314,23 @@ export function AdminDashboard() {
     setAdminError('');
     setAdminBusy(true);
     try {
-      const result = await apiPost<{ user: { email: string }; temporaryPassword: string; emailSent: boolean }>('/admin/admins', {
-        displayName: adminName.trim(),
+      const result = await apiPost<{
+        user: { username: string; login: string; email: string };
+        temporaryPassword: string;
+      }>('/admin/admins', {
+        username: adminUsername.trim().toLowerCase(),
+        login: adminLogin.trim().toLowerCase(),
         email: adminEmail.trim().toLowerCase(),
         password: adminPassword || undefined,
       });
       setAdminResult({
         temporaryPassword: result.temporaryPassword,
-        emailSent: result.emailSent,
+        username: result.user.username,
+        login: result.user.login,
         email: result.user.email,
       });
-      setAdminName('');
+      setAdminUsername('');
+      setAdminLogin('');
       setAdminEmail('');
       setAdminPassword('');
       refresh();
@@ -431,16 +443,19 @@ export function AdminDashboard() {
                     <h2 className="report-card__title">
                       {report.targetType === 'WEBINAR'
                         ? report.webinarTitle ?? 'Захід видалено'
-                        : report.targetUserName ?? 'Користувача видалено'}
+                        : report.targetUsername ? `@${report.targetUsername}` : 'Користувача видалено'}
                     </h2>
                     <p className="report-card__meta">
                       {report.targetType === 'WEBINAR'
-                        ? <>Організатор: {report.webinarOwnerName ?? '—'}{report.webinarStatus ? ` · ${report.webinarStatus}` : ''}</>
-                        : <>Пошта: {report.targetUserEmail ?? '—'} · Статус: {report.targetUserStatus ? USER_STATUS_LABELS[report.targetUserStatus] : '—'}</>}
+                        ? <>Організатор: @{report.webinarOwnerUsername ?? '—'}{report.webinarStatus ? ` · ${report.webinarStatus}` : ''}</>
+                        : <>Статус: {report.targetUserStatus ? USER_STATUS_LABELS[report.targetUserStatus] : '—'}</>}
                     </p>
                     <p className="report-card__reporter">
-                      Скаржник: {report.isAutomated ? 'автоматична модерація' : report.reporterName ?? 'видалений користувач'}
-                      {report.reporterEmail ? ` (${report.reporterEmail})` : ''}
+                      Скаржник: {report.isAutomated
+                        ? 'автоматична модерація'
+                        : report.reporterUsername
+                          ? `@${report.reporterUsername}`
+                          : 'видалений користувач'}
                     </p>
                     {report.details ? <blockquote className="report-card__details">{report.details}</blockquote> : null}
                     {report.resolutionNote ? <p className="report-card__resolution">Рішення: {report.resolutionNote}</p> : null}
@@ -496,7 +511,7 @@ export function AdminDashboard() {
                         <ModerationBadge status={webinar.moderationStatus} />
                       </div>
                       <p className="admin-row__meta">
-                        {webinar.owner.displayName} · {CATEGORY_LABELS[webinar.category]} · {formatDateTime(webinar.startsAt)}
+                        @{webinar.owner.username} · {CATEGORY_LABELS[webinar.category]} · {formatDateTime(webinar.startsAt)}
                       </p>
                       <p className="admin-row__meta">
                         В обраному: {webinar.favoriteCount} · Реєстрацій: {webinar.registrationCount} · {MODERATION_LABELS[webinar.moderationStatus]}
@@ -552,7 +567,7 @@ export function AdminDashboard() {
               <div className="search-field">
                 <Icon name="i-search" size={18} />
                 <label className="sr-only" htmlFor="admin-user-search">Пошук користувачів</label>
-                <input id="admin-user-search" type="search" placeholder="Пошук за ім’ям або поштою" value={userSearch} onChange={(event) => setUserSearch(event.target.value)} />
+                <input id="admin-user-search" type="search" placeholder="Пошук за юзернеймом" value={userSearch} onChange={(event) => setUserSearch(event.target.value)} />
               </div>
               <div className="select-field">
                 <label className="sr-only" htmlFor="admin-user-role">Роль</label>
@@ -582,15 +597,15 @@ export function AdminDashboard() {
                   const isSelf = target.id === user?.id;
                   return (
                     <article key={target.id} className="admin-row">
-                      <Avatar src={target.avatarUrl} name={target.displayName} size="sm" />
+                      <Avatar src={target.avatarUrl} name={target.username} size="sm" />
                       <div className="admin-row__main">
                         <div className="admin-row__title-line">
-                          <span className="admin-row__title">{target.displayName}</span>
+                          <span className="admin-row__title">@{target.username}</span>
                           <span className={`role-badge role-badge--${target.role.toLowerCase()}`}>{USER_ROLE_LABELS[target.role]}</span>
                           <span className={`user-status user-status--${target.status.toLowerCase()}`}>{USER_STATUS_LABELS[target.status]}</span>
                           {isSelf ? <span className="report-badge">Це ви</span> : null}
                         </div>
-                        <p className="admin-row__meta">{target.email} · на платформі з {formatDate(target.createdAt)}</p>
+                        <p className="admin-row__meta">На платформі з {formatDate(target.createdAt)}</p>
                         <p className="admin-row__meta">Заходів: {target.webinarCount} · Відкритих скарг: {target.openReports}</p>
                       </div>
                       <div className="admin-row__actions">
@@ -612,7 +627,7 @@ export function AdminDashboard() {
                                 className="btn btn--danger-ghost btn--small"
                                 onClick={() => setConfirm({
                                   title: 'Заблокувати користувача?',
-                                  text: `${target.displayName} втратить доступ до акаунта, а сесії буде завершено.`,
+                                  text: `@${target.username} втратить доступ до акаунта, а сесії буде завершено.`,
                                   label: 'Заблокувати',
                                   danger: true,
                                   run: async () => { await apiPatch(`/admin/users/${target.id}`, { status: 'BANNED' }); setFlash('Користувача заблоковано.'); },
@@ -627,7 +642,7 @@ export function AdminDashboard() {
                               aria-label="Видалити користувача"
                               onClick={() => setConfirm({
                                 title: 'Видалити користувача?',
-                                text: `Акаунт ${target.displayName} буде анонімізовано, а всі створені заходи — скасовано та приховано.`,
+                                text: `Акаунт @${target.username} буде анонімізовано, а всі створені заходи — скасовано та приховано.`,
                                 label: 'Видалити',
                                 danger: true,
                                 run: async () => {
@@ -661,7 +676,7 @@ export function AdminDashboard() {
                     <span className="audit-item__icon"><Icon name="i-shield" size={16} /></span>
                     <div>
                       <p className="audit-item__title">{AUDIT_LABELS[item.action] ?? item.action}</p>
-                      <p className="audit-item__meta">{item.adminName ?? 'Система'} · {formatDateTime(item.createdAt)}</p>
+                      <p className="audit-item__meta">{item.adminUsername ? `@${item.adminUsername}` : 'Система'} · {formatDateTime(item.createdAt)}</p>
                       {item.note ? <p className="audit-item__note">{item.note}</p> : null}
                     </div>
                   </li>
@@ -677,7 +692,7 @@ export function AdminDashboard() {
         open={reportToResolve !== null}
         onClose={() => setReportToResolve(null)}
         title="Рішення за скаргою"
-        description={reportToResolve ? `${reportToResolve.targetType === 'WEBINAR' ? 'Захід' : 'Користувач'}: ${reportToResolve.targetType === 'WEBINAR' ? reportToResolve.webinarTitle : reportToResolve.targetUserName}` : ''}
+        description={reportToResolve ? `${reportToResolve.targetType === 'WEBINAR' ? 'Захід' : 'Користувач'}: ${reportToResolve.targetType === 'WEBINAR' ? reportToResolve.webinarTitle : `@${reportToResolve.targetUsername ?? '—'}`}` : ''}
         size="md"
         footer={
           <>
@@ -740,12 +755,14 @@ export function AdminDashboard() {
         open={createAdminOpen}
         onClose={() => setCreateAdminOpen(false)}
         title="Новий адміністратор"
-        description="Адміністратор отримає тимчасовий пароль і зможе увійти лише після зміни пароля."
+        description="Створіть облікові дані. Пароль не надсилається — передайте його особисто безпечним каналом."
         size="md"
       >
         {adminResult ? (
           <div className="admin-created">
             <p className="form__notice">Адміністратора створено.</p>
+            <p>Юзернейм: <strong>@{adminResult.username}</strong></p>
+            <p>Логін: <strong>{adminResult.login}</strong></p>
             <p>Пошта: <strong>{adminResult.email}</strong></p>
             <p>Тимчасовий пароль:</p>
             <div className="temp-password">
@@ -754,23 +771,26 @@ export function AdminDashboard() {
                 type="button"
                 className="icon-button"
                 aria-label="Скопіювати пароль"
-                onClick={() => void navigator.clipboard.writeText(adminResult.temporaryPassword)}
+                onClick={() => { void navigator.clipboard.writeText(adminResult.temporaryPassword).catch(() => undefined); }}
               >
                 <Icon name="i-copy" size={17} />
               </button>
             </div>
             <p className="form__hint">
-              {adminResult.emailSent
-                ? 'Пароль також надіслано на пошту. Покажіть його один раз і передайте адміністратору безпечним каналом.'
-                : 'Лист не вдалося надіслати — передайте пароль вручну безпечним каналом. Він більше не буде показаний.'}
+              Пароль більше не буде показаний. Передайте логін, пошту й пароль новому
+              адміністратору; після входу він змінить пароль.
             </p>
             <button type="button" className="btn btn--primary" onClick={() => { setCreateAdminOpen(false); setAdminResult(null); }}>Готово</button>
           </div>
         ) : (
           <form className="form" onSubmit={submitCreateAdmin} noValidate>
             <div className="form__group">
-              <label className="form__label" htmlFor="new-admin-name">Ім’я</label>
-              <input className="form__control" id="new-admin-name" type="text" maxLength={60} value={adminName} onChange={(event) => setAdminName(event.target.value)} required />
+              <label className="form__label" htmlFor="new-admin-username">Юзернейм <span className="form__hint">(публічний)</span></label>
+              <input className="form__control" id="new-admin-username" type="text" maxLength={30} value={adminUsername} onChange={(event) => setAdminUsername(event.target.value)} required />
+            </div>
+            <div className="form__group">
+              <label className="form__label" htmlFor="new-admin-login">Логін <span className="form__hint">(для входу)</span></label>
+              <input className="form__control" id="new-admin-login" type="text" maxLength={30} value={adminLogin} onChange={(event) => setAdminLogin(event.target.value)} required />
             </div>
             <div className="form__group">
               <label className="form__label" htmlFor="new-admin-email">Пошта</label>

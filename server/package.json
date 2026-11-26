@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "prebuild": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsc -p tsconfig.build.json",
     "prestart": "node dist/db/migrate.js",
     "start": "node dist/index.js",
@@ -33,7 +34,6 @@
     "pino": "^9.9.0",
     "pino-http": "^10.5.0",
     "postgres": "^3.4.7",
-    "resend": "^6.40.0",
     "sharp": "^0.35.5",
     "zod": "^4.6.7"
   },

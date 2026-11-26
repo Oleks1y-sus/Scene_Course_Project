@@ -17,7 +17,8 @@
     "server:migrate": "npm --prefix server run db:migrate",
     "server:seed": "npm --prefix server run db:seed",
     "server:test": "npm --prefix server run test",
-    "server:typecheck": "npm --prefix server run typecheck"
+    "server:typecheck": "npm --prefix server run typecheck",
+    "server:db:generate": "npm --prefix server run db:generate"
   },
   "dependencies": {
     "@splidejs/splide": "^4.1.4",

@@ -33,13 +33,12 @@ export interface PageMeta {
 
 export interface User {
   id: string;
+  username: string;
+  login: string;
   email: string;
-  displayName: string;
   bio: string | null;
   role: UserRole;
   status: UserStatus;
-  emailVerifiedAt: string | null;
-  pendingEmail: string | null;
   mustChangePassword: boolean;
   avatarPreset: string;
   avatarUrl: string;
@@ -48,7 +47,7 @@ export interface User {
 
 export interface WebinarOwner {
   id: string;
-  displayName: string;
+  username: string;
   avatarUrl: string;
   bio?: string | null;
 }
@@ -120,28 +119,24 @@ export interface AdminReport {
   createdAt: string;
   resolvedAt: string | null;
   reporterId: string | null;
-  reporterName: string | null;
-  reporterEmail: string | null;
+  reporterUsername: string | null;
   webinarId: string | null;
   webinarTitle: string | null;
   webinarStatus: WebinarStatus | null;
   webinarModeration: ModerationStatus | null;
   webinarOwnerId: string | null;
-  webinarOwnerName: string | null;
+  webinarOwnerUsername: string | null;
   targetUserId: string | null;
-  targetUserName: string | null;
-  targetUserEmail: string | null;
+  targetUsername: string | null;
   targetUserStatus: UserStatus | null;
-  resolverName: string | null;
+  resolverUsername: string | null;
 }
 
 export interface AdminUser {
   id: string;
-  email: string;
-  displayName: string;
+  username: string;
   role: UserRole;
   status: UserStatus;
-  emailVerifiedAt: string | null;
   mustChangePassword: boolean;
   createdAt: string;
   avatarUrl: string;
@@ -156,7 +151,7 @@ export interface AdminAuditItem {
   targetId: string | null;
   note: string | null;
   createdAt: string;
-  adminName: string | null;
+  adminUsername: string | null;
 }
 
 export interface AdminStats {

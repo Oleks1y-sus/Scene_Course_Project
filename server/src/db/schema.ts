@@ -41,7 +41,7 @@ export const REPORT_REASONS = [
   'OTHER',
 ] as const;
 export const REPORT_STATUSES = ['OPEN', 'RESOLVED', 'DISMISSED'] as const;
-export const AUTH_CODE_PURPOSES = ['VERIFY_EMAIL', 'LOGIN', 'CHANGE_EMAIL', 'ADMIN_INVITE'] as const;
+// Auth is credential-based: no email codes or email verification.
 export const MEDIA_KINDS = ['AVATAR', 'COVER'] as const;
 
 export const userRoleEnum = pgEnum('user_role', USER_ROLES);
@@ -53,7 +53,6 @@ export const registrationStatusEnum = pgEnum('registration_status', REGISTRATION
 export const reportTargetEnum = pgEnum('report_target', REPORT_TARGETS);
 export const reportReasonEnum = pgEnum('report_reason', REPORT_REASONS);
 export const reportStatusEnum = pgEnum('report_status', REPORT_STATUSES);
-export const authCodePurposeEnum = pgEnum('auth_code_purpose', AUTH_CODE_PURPOSES);
 export const mediaKindEnum = pgEnum('media_kind', MEDIA_KINDS);
 
 export type UserRole = (typeof USER_ROLES)[number];
@@ -65,7 +64,6 @@ export type RegistrationStatus = (typeof REGISTRATION_STATUSES)[number];
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 export type ReportReason = (typeof REPORT_REASONS)[number];
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
-export type AuthCodePurpose = (typeof AUTH_CODE_PURPOSES)[number];
 export type MediaKind = (typeof MEDIA_KINDS)[number];
 
 const timestamps = {
@@ -77,16 +75,15 @@ export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    username: varchar('username', { length: 30 }).notNull(),
+    login: varchar('login', { length: 30 }).notNull(),
     email: varchar('email', { length: 254 }).notNull(),
     passwordHash: text('password_hash').notNull(),
-    displayName: varchar('display_name', { length: 60 }).notNull(),
     bio: varchar('bio', { length: 280 }),
     avatarPreset: varchar('avatar_preset', { length: 20 }).notNull().default('avatar-01'),
     avatarUrl: text('avatar_url'),
     role: userRoleEnum('role').notNull().default('USER'),
     status: userStatusEnum('status').notNull().default('ACTIVE'),
-    emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true, mode: 'date' }),
-    pendingEmail: varchar('pending_email', { length: 254 }),
     mustChangePassword: boolean('must_change_password').notNull().default(false),
     failedLoginAttempts: integer('failed_login_attempts').notNull().default(0),
     lockedUntil: timestamp('locked_until', { withTimezone: true, mode: 'date' }),
@@ -95,6 +92,8 @@ export const users = pgTable(
     deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
   },
   (table) => [
+    uniqueIndex('users_username_unique').on(table.username),
+    uniqueIndex('users_login_unique').on(table.login),
     uniqueIndex('users_email_unique').on(table.email),
     index('users_role_idx').on(table.role),
     index('users_status_idx').on(table.status),
@@ -124,24 +123,22 @@ export const sessions = pgTable(
   ],
 );
 
-export const authCodes = pgTable(
-  'auth_codes',
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    email: varchar('email', { length: 254 }).notNull(),
-    purpose: authCodePurposeEnum('purpose').notNull(),
-    codeHash: varchar('code_hash', { length: 64 }).notNull(),
-    attempts: integer('attempts').notNull().default(0),
+    tokenHash: varchar('token_hash', { length: 64 }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull(),
     consumedAt: timestamp('consumed_at', { withTimezone: true, mode: 'date' }),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
   },
   (table) => [
-    index('auth_codes_lookup_idx').on(table.email, table.purpose, table.createdAt),
-    index('auth_codes_user_idx').on(table.userId),
+    uniqueIndex('password_reset_tokens_hash_unique').on(table.tokenHash),
+    index('password_reset_tokens_user_idx').on(table.userId, table.createdAt),
+    index('password_reset_tokens_expires_idx').on(table.expiresAt),
   ],
 );
 

@@ -94,6 +94,12 @@ export const formatRelative = (iso: string): string => {
 export const isValidEmail = (value: string): boolean =>
   /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
 
+export const HANDLE_PATTERN = /^[a-z][a-z0-9_]{2,29}$/;
+
+export const normalizeHandle = (value: string): string => value.trim().toLowerCase();
+
+export const isValidHandle = (value: string): boolean => HANDLE_PATTERN.test(normalizeHandle(value));
+
 export const passwordChecks = (password: string) => ({
   length: password.length >= 10,
   lower: /[a-zа-яіїєґ]/.test(password),

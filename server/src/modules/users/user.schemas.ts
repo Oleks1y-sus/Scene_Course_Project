@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { AVATAR_PRESETS } from '../../lib/presets.js';
+import { hasMarkup, isAllowedBio, normalizeText } from '../../lib/text.js';
 import {
-  hasMarkup,
-  isAllowedBio,
-  normalizeText,
-} from '../../lib/text.js';
-import { displayNameSchema, emailSchema, passwordSchema } from '../auth/auth.schemas.js';
+  emailSchema,
+  passwordSchema,
+  usernameSchema,
+} from '../auth/auth.schemas.js';
 
 export const bioSchema = z
   .string()
@@ -17,7 +17,7 @@ export const bioSchema = z
 
 export const updateProfileSchema = z
   .object({
-    displayName: displayNameSchema.optional(),
+    username: usernameSchema.optional(),
     bio: bioSchema.nullable().optional(),
     avatarPreset: z.enum(AVATAR_PRESETS).optional(),
     avatarMediaId: z.uuid('Некоректний файл аватара.').optional(),
@@ -33,12 +33,6 @@ export const requestEmailChangeSchema = z
   .object({
     newEmail: emailSchema,
     password: z.string({ error: 'Введіть пароль.' }).min(1, 'Введіть пароль.').max(128),
-  })
-  .strict();
-
-export const confirmEmailChangeSchema = z
-  .object({
-    code: z.string().trim().regex(/^\d{6}$/, 'Код має містити 6 цифр.'),
   })
   .strict();
 

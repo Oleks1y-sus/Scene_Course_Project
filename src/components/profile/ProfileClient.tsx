@@ -29,6 +29,8 @@ import {
 import {
   formatDate,
   formatDateTime,
+  isValidEmail,
+  isValidHandle,
   passwordChecks,
   passwordScore,
 } from '@/lib/format';
@@ -155,10 +157,10 @@ export function ProfileClient({ initialTab, notice }: { initialTab?: string; not
       <div className="container">
         <header className="profile-header">
           <div className="profile-header__identity">
-            <Avatar src={user.avatarUrl} name={user.displayName} size="xl" />
+            <Avatar src={user.avatarUrl} name={user.username} size="xl" />
             <div>
               <p className="profile-header__eyebrow">{USER_ROLE_LABELS[user.role]}</p>
-              <h1 className="profile-header__name">{user.displayName}</h1>
+              <h1 className="profile-header__name">@{user.username}</h1>
               <p className="profile-header__email"><Icon name="i-mail" size={15} /> {user.email}</p>
               <p className="profile-header__joined">На «Сцені» з {formatDate(user.createdAt)}</p>
             </div>
@@ -180,14 +182,6 @@ export function ProfileClient({ initialTab, notice }: { initialTab?: string; not
               <strong>Змініть тимчасовий пароль</strong>
               <p>Ваш акаунт створено адміністратором. Щоб отримати доступ до керування, встановіть власний пароль у розділі «Безпека».</p>
             </div>
-          </div>
-        ) : null}
-
-        {user.pendingEmail ? (
-          <div className="info-banner" role="status">
-            <Icon name="i-mail" size={20} />
-            <span>Очікує підтвердження нова пошта <strong>{user.pendingEmail}</strong>.</span>
-            <button type="button" className="text-button" onClick={() => setTab('settings')}>Перейти до налаштувань</button>
           </div>
         ) : null}
 
@@ -278,7 +272,6 @@ export function ProfileClient({ initialTab, notice }: { initialTab?: string; not
                 user={user}
                 setUser={setUser}
                 onFlash={setFlash}
-                onRefresh={refresh}
               />
             ) : null}
 
@@ -499,14 +492,12 @@ function SettingsTab({
   user,
   setUser,
   onFlash,
-  onRefresh,
 }: {
   user: User;
   setUser: (user: User) => void;
   onFlash: (message: string) => void;
-  onRefresh: () => Promise<User | null>;
 }) {
-  const [displayName, setDisplayName] = useState(user.displayName);
+  const [username, setUsername] = useState(user.username);
   const [bio, setBio] = useState(user.bio ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -519,26 +510,27 @@ function SettingsTab({
   const [emailPassword, setEmailPassword] = useState('');
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailError, setEmailError] = useState('');
-  const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [emailCode, setEmailCode] = useState('');
-  const [emailDevCode, setEmailDevCode] = useState<string | undefined>();
-  const [pendingEmail, setPendingEmail] = useState(user.pendingEmail);
-  const [emailModalError, setEmailModalError] = useState('');
+  const [emailFields, setEmailFields] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    setDisplayName(user.displayName);
+    setUsername(user.username);
     setBio(user.bio ?? '');
-    setPendingEmail(user.pendingEmail);
   }, [user]);
 
   const saveProfile = async (event: React.FormEvent) => {
     event.preventDefault();
-    setSaving(true);
     setError('');
     setFields({});
+
+    if (!isValidHandle(username)) {
+      setFields({ username: 'Юзернейм: 3–30 символів, латиниця, цифри або підкреслення.' });
+      return;
+    }
+
+    setSaving(true);
     try {
       const result = await apiPatch<{ user: User }>('/users/me', {
-        displayName: displayName.trim(),
+        username: username.trim().toLowerCase(),
         bio: bio.trim() || null,
       });
       setUser(result.user);
@@ -591,56 +583,33 @@ function SettingsTab({
     }
   };
 
-  const requestEmailChange = async (event: React.FormEvent) => {
+  const changeEmail = async (event: React.FormEvent) => {
     event.preventDefault();
     setEmailError('');
+    setEmailFields({});
+
+    if (!isValidEmail(newEmail)) {
+      setEmailFields({ newEmail: 'Введіть коректну пошту.' });
+      return;
+    }
+    if (!emailPassword) {
+      setEmailFields({ password: 'Введіть поточний пароль.' });
+      return;
+    }
+
     setEmailBusy(true);
     try {
-      const result = await apiPost<{ pendingEmail: string; devCode?: string }>('/users/me/email', {
+      const result = await apiPatch<{ user: User }>('/users/me/email', {
         newEmail: newEmail.trim().toLowerCase(),
         password: emailPassword,
       });
-      setPendingEmail(result.pendingEmail);
-      setEmailDevCode(result.devCode);
-      setEmailCode(result.devCode ?? '');
+      setUser(result.user);
+      setNewEmail('');
       setEmailPassword('');
-      setEmailModalOpen(true);
-      setEmailModalError('');
+      onFlash('Електронну пошту змінено.');
     } catch (caught) {
       setEmailError(errorMessage(caught));
-    } finally {
-      setEmailBusy(false);
-    }
-  };
-
-  const resendEmailCode = async () => {
-    setEmailModalError('');
-    setEmailBusy(true);
-    try {
-      const result = await apiPost<{ sent: true; devCode?: string }>('/users/me/email/resend');
-      setEmailDevCode(result.devCode);
-      if (result.devCode) setEmailCode(result.devCode);
-    } catch (caught) {
-      setEmailModalError(errorMessage(caught));
-    } finally {
-      setEmailBusy(false);
-    }
-  };
-
-  const confirmEmail = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setEmailModalError('');
-    setEmailBusy(true);
-    try {
-      const result = await apiPost<{ user: User }>('/users/me/email/verify', { code: emailCode });
-      setUser(result.user);
-      setPendingEmail(null);
-      setEmailModalOpen(false);
-      setNewEmail('');
-      onFlash('Електронну пошту змінено.');
-      await onRefresh();
-    } catch (caught) {
-      setEmailModalError(errorMessage(caught));
+      if (caught instanceof ApiError) setEmailFields(caught.fields ?? {});
     } finally {
       setEmailBusy(false);
     }
@@ -651,7 +620,9 @@ function SettingsTab({
       <div className="section-heading">
         <div>
           <h2 className="section-heading__title" id="settings-title">Налаштування профілю</h2>
-          <p className="section-heading__text">Ваше ім’я, аватар і контактні дані бачать інші учасники.</p>
+          <p className="section-heading__text">
+            Публічно видно лише юзернейм. Логін і пошта залишаються приватними.
+          </p>
         </div>
       </div>
 
@@ -659,7 +630,7 @@ function SettingsTab({
         <section className="panel" aria-labelledby="avatar-title">
           <h3 className="panel__title" id="avatar-title">Аватар</h3>
           <div className="avatar-editor">
-            <Avatar src={user.avatarUrl} name={user.displayName} size="xl" />
+            <Avatar src={user.avatarUrl} name={user.username} size="xl" />
             <div>
               <p className="panel__text">Оберіть готовий варіант або завантажте власне фото.</p>
               <div className="avatar-options">
@@ -702,18 +673,22 @@ function SettingsTab({
           <h3 className="panel__title" id="public-profile-title">Публічний профіль</h3>
           <form className="form" onSubmit={saveProfile} noValidate>
             <div className="form__group">
-              <label className="form__label" htmlFor="profile-name">Ім’я та прізвище</label>
+              <label className="form__label" htmlFor="profile-username">Юзернейм</label>
               <input
-                className={`form__control ${fields.displayName ? 'is-invalid' : ''}`}
-                id="profile-name"
+                className={`form__control ${fields.username ? 'is-invalid' : ''}`}
+                id="profile-username"
                 type="text"
-                maxLength={60}
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
+                maxLength={30}
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
                 required
-                aria-invalid={Boolean(fields.displayName)}
+                aria-invalid={Boolean(fields.username)}
+                aria-describedby="profile-username-help"
               />
-              {fields.displayName ? <p className="form__error">{fields.displayName}</p> : null}
+              <p className="form__hint" id="profile-username-help">
+                Публічне ім’я на платформі. 3–30 символів: латиниця, цифри, підкреслення.
+              </p>
+              {fields.username ? <p className="form__error">{fields.username}</p> : null}
             </div>
             <div className="form__group">
               <label className="form__label" htmlFor="profile-bio">Про себе <span className="form__hint">(до 280 символів)</span></label>
@@ -736,22 +711,21 @@ function SettingsTab({
           </form>
         </section>
 
-        <section className="panel" aria-labelledby="email-title">
-          <h3 className="panel__title" id="email-title">Електронна пошта</h3>
-          <p className="panel__text">
-            Поточна пошта: <strong>{user.email}</strong>.
-            {pendingEmail ? <> Очікує підтвердження: <strong>{pendingEmail}</strong>.</> : null}
+        <section className="panel" aria-labelledby="credentials-title">
+          <h3 className="panel__title" id="credentials-title">Дані входу</h3>
+          <dl className="stats-list">
+            <div><dt>Юзернейм</dt><dd>@{user.username}</dd></div>
+            <div><dt>Логін</dt><dd>{user.login}</dd></div>
+            <div><dt>Пошта</dt><dd>{user.email}</dd></div>
+          </dl>
+          <p className="form__hint">
+            Логін змінити не можна. Пошту можна змінити, підтвердивши поточний пароль.
           </p>
-          {pendingEmail ? (
-            <button type="button" className="btn btn--ghost btn--small" onClick={() => setEmailModalOpen(true)}>
-              Підтвердити нову пошту
-            </button>
-          ) : null}
-          <form className="form form--inline" onSubmit={requestEmailChange} noValidate>
+          <form className="form form--inline" onSubmit={changeEmail} noValidate>
             <div className="form__group">
               <label className="form__label" htmlFor="new-email">Нова пошта</label>
               <input
-                className="form__control"
+                className={`form__control ${emailFields.newEmail ? 'is-invalid' : ''}`}
                 id="new-email"
                 type="email"
                 maxLength={254}
@@ -760,11 +734,12 @@ function SettingsTab({
                 required
                 placeholder="new@example.com"
               />
+              {emailFields.newEmail ? <p className="form__error">{emailFields.newEmail}</p> : null}
             </div>
             <div className="form__group">
               <label className="form__label" htmlFor="email-password">Поточний пароль</label>
               <input
-                className="form__control"
+                className={`form__control ${emailFields.password ? 'is-invalid' : ''}`}
                 id="email-password"
                 type="password"
                 maxLength={128}
@@ -773,52 +748,15 @@ function SettingsTab({
                 required
                 autoComplete="current-password"
               />
+              {emailFields.password ? <p className="form__error">{emailFields.password}</p> : null}
             </div>
             {emailError ? <p className="form__alert" role="alert">{emailError}</p> : null}
             <button type="submit" className="btn btn--ghost" disabled={emailBusy}>
-              {emailBusy ? 'Надсилаємо…' : 'Надіслати код'}
+              {emailBusy ? 'Зберігаємо…' : 'Змінити пошту'}
             </button>
           </form>
         </section>
       </div>
-
-      <Modal
-        open={emailModalOpen}
-        onClose={() => setEmailModalOpen(false)}
-        title="Підтвердіть нову пошту"
-        description={`Введіть код, надісланий на ${pendingEmail ?? 'нову адресу'}.`}
-        size="sm"
-      >
-        <form className="form" onSubmit={confirmEmail} noValidate>
-          {emailDevCode ? (
-            <div className="dev-code" role="note">
-              <span>Демо-режим: код <strong>{emailDevCode}</strong></span>
-              <button type="button" className="dev-code__button" onClick={() => setEmailCode(emailDevCode)}>Заповнити</button>
-            </div>
-          ) : null}
-          <div className="form__group">
-            <label className="form__label" htmlFor="email-code">Код підтвердження</label>
-            <input
-              className="form__control form__control--otp"
-              id="email-code"
-              inputMode="numeric"
-              maxLength={6}
-              value={emailCode}
-              onChange={(event) => setEmailCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              required
-            />
-          </div>
-          {emailModalError ? <p className="form__alert" role="alert">{emailModalError}</p> : null}
-          <div className="form__actions">
-            <button type="button" className="text-button" onClick={() => void resendEmailCode()} disabled={emailBusy}>
-              Надіслати код ще раз
-            </button>
-            <button type="submit" className="btn btn--primary" disabled={emailBusy || emailCode.length !== 6}>
-              {emailBusy ? 'Перевіряємо…' : 'Підтвердити'}
-            </button>
-          </div>
-        </form>
-      </Modal>
     </section>
   );
 }
@@ -985,10 +923,11 @@ function SecurityTab({
         <section className="panel" aria-labelledby="account-info-title">
           <h3 className="panel__title" id="account-info-title">Дані акаунта</h3>
           <dl className="stats-list">
+            <div><dt>Юзернейм</dt><dd>@{user.username}</dd></div>
+            <div><dt>Логін</dt><dd>{user.login}</dd></div>
             <div><dt>Пошта</dt><dd>{user.email}</dd></div>
-            <div><dt>Підтверджено</dt><dd>{user.emailVerifiedAt ? formatDate(user.emailVerifiedAt) : 'Ні'}</dd></div>
             <div><dt>Роль</dt><dd>{USER_ROLE_LABELS[user.role]}</dd></div>
-            <div><dt>Захист входу</dt><dd>Код на пошту + пароль</dd></div>
+            <div><dt>Захист входу</dt><dd>Логін + пароль</dd></div>
           </dl>
         </section>
 

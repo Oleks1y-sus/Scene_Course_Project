@@ -115,8 +115,8 @@ export function WebinarCard({
 
         <div className="webinar-card__footer">
           <div className="webinar-card__owner">
-            <Avatar src={webinar.owner.avatarUrl} name={webinar.owner.displayName} size="xs" />
-            <span>{webinar.owner.displayName}</span>
+            <Avatar src={webinar.owner.avatarUrl} name={webinar.owner.username} size="xs" />
+            <span>@{webinar.owner.username}</span>
           </div>
           {webinar.isOwner ? (
             <Link href={`/events/${webinar.id}/edit`} className="webinar-card__link">

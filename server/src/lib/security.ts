@@ -27,9 +27,7 @@ export const hmacHex = (value: string, pepper: string): string => {
 
 export const hashSessionToken = (token: string): string => hmacHex(token, env.SESSION_PEPPER);
 
-export const hashOtp = (email: string, purpose: string, code: string): string => {
-  return hmacHex(`${email}:${purpose}:${code}`, env.OTP_PEPPER);
-};
+export const hashResetToken = (token: string): string => hmacHex(token, env.SESSION_PEPPER);
 
 export const hashIp = (ip: string | undefined): string | null => {
   if (!ip) return null;
@@ -38,7 +36,7 @@ export const hashIp = (ip: string | undefined): string | null => {
 
 export const generateSessionToken = (): string => randomBytes(32).toString('base64url');
 
-export const generateOtp = (): string => randomInt(0, 1_000_000).toString().padStart(6, '0');
+export const generateResetToken = (): string => randomBytes(32).toString('base64url');
 
 export const generateTemporaryPassword = (): string => {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';

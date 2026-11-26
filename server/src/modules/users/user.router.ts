@@ -3,16 +3,10 @@ import { asyncRoute, parseBody } from '../../lib/http.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { noStore } from '../../middleware/rateLimit.js';
 import { clearSessionCookie } from '../../services/session.js';
-import {
-  changePassword,
-  confirmEmailChange,
-  requestEmailChange,
-  resendEmailChangeCode,
-} from '../auth/auth.service.js';
+import { changePassword, requestEmailChange } from '../auth/auth.service.js';
 import { getProfileStats } from '../webinars/webinar.service.js';
 import {
   changePasswordSchema,
-  confirmEmailChangeSchema,
   deleteAccountSchema,
   requestEmailChangeSchema,
   updateProfileSchema,
@@ -48,29 +42,12 @@ userRouter.patch(
   }),
 );
 
-userRouter.post(
+userRouter.patch(
   '/me/email',
   asyncRoute(async (req, res) => {
     const input = parseBody(requestEmailChangeSchema, req);
-    const result = await requestEmailChange(req.user!, input.newEmail, input.password);
-    res.json({ data: result });
-  }),
-);
-
-userRouter.post(
-  '/me/email/verify',
-  asyncRoute(async (req, res) => {
-    const input = parseBody(confirmEmailChangeSchema, req);
-    const user = await confirmEmailChange(req.user!, input.code);
+    const user = await requestEmailChange(req.user!, input.newEmail, input.password);
     res.json({ data: { user } });
-  }),
-);
-
-userRouter.post(
-  '/me/email/resend',
-  asyncRoute(async (req, res) => {
-    const result = await resendEmailChangeCode(req.user!);
-    res.json({ data: result });
   }),
 );
 

@@ -414,9 +414,9 @@ export function WebinarDetailClient({ id }: { id: string }) {
             <div className="owner-card">
               <p className="owner-card__eyebrow">Організатор</p>
               <div className="owner-card__profile">
-                <Avatar src={webinar.owner.avatarUrl} name={webinar.owner.displayName} size="md" />
+                <Avatar src={webinar.owner.avatarUrl} name={webinar.owner.username} size="md" />
                 <div>
-                  <p className="owner-card__name">{webinar.owner.displayName}</p>
+                  <p className="owner-card__name">@{webinar.owner.username}</p>
                   <p className="owner-card__bio">{webinar.owner.bio || 'Організатор онлайн-заходів на «Сцені».'}</p>
                 </div>
               </div>
@@ -454,7 +454,7 @@ export function WebinarDetailClient({ id }: { id: string }) {
         onSuccess={(message) => setFlash(message)}
         targetType="USER"
         targetId={webinar.owner.id}
-        targetName={webinar.owner.displayName}
+        targetName={`@${webinar.owner.username}`}
       />
 
       <Modal

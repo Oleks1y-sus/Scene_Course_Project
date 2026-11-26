@@ -19,12 +19,10 @@ import {
   notFound,
 } from '../../lib/errors.js';
 import { buildMeta, isUniqueViolation } from '../../lib/http.js';
-import { logger } from '../../lib/logger.js';
 import {
   generateTemporaryPassword,
   hashPassword,
 } from '../../lib/security.js';
-import { sendAdminCredentialsEmail } from '../../services/mail.js';
 import { revokeAllSessions } from '../../services/session.js';
 import { toAuthUser, type AuthUser } from '../../types/auth.js';
 import { listWebinars, getWebinarForViewer, deleteWebinar } from '../webinars/webinar.service.js';
@@ -159,19 +157,17 @@ export const listReports = async (query: ReportQuery) => {
       createdAt: reports.createdAt,
       resolvedAt: reports.resolvedAt,
       reporterId: reports.reporterId,
-      reporterName: reporter.displayName,
-      reporterEmail: reporter.email,
+      reporterUsername: reporter.username,
       webinarId: reports.webinarId,
       webinarTitle: webinars.title,
       webinarStatus: webinars.status,
       webinarModeration: webinars.moderationStatus,
       webinarOwnerId: webinars.ownerId,
-      webinarOwnerName: webinarOwner.displayName,
+      webinarOwnerUsername: webinarOwner.username,
       targetUserId: reports.userId,
-      targetUserName: targetUser.displayName,
-      targetUserEmail: targetUser.email,
+      targetUsername: targetUser.username,
       targetUserStatus: targetUser.status,
-      resolverName: resolver.displayName,
+      resolverUsername: resolver.username,
     })
     .from(reports)
     .leftJoin(reporter, eq(reports.reporterId, reporter.id))
@@ -362,9 +358,8 @@ export const listAdminUsers = async (query: UserQuery) => {
   if (query.role) conditions.push(eq(users.role, query.role));
   if (query.q) {
     const escaped = query.q.replace(/[\\%_]/g, '\\$&');
-    const pattern = `%${escaped}%`;
-    const search = or(ilike(users.email, pattern), ilike(users.displayName, pattern));
-    if (search) conditions.push(search);
+    const search = ilike(users.username, `%${escaped}%`);
+    conditions.push(search);
   }
 
   const where = and(...conditions);
@@ -372,11 +367,9 @@ export const listAdminUsers = async (query: UserQuery) => {
   const rows = await db
     .select({
       id: users.id,
-      email: users.email,
-      displayName: users.displayName,
+      username: users.username,
       role: users.role,
       status: users.status,
-      emailVerifiedAt: users.emailVerifiedAt,
       mustChangePassword: users.mustChangePassword,
       createdAt: users.createdAt,
       avatarUrl: sql<string>`coalesce(${users.avatarUrl}, '/img/avatars/' || ${users.avatarPreset} || '.svg')`,
@@ -394,7 +387,6 @@ export const listAdminUsers = async (query: UserQuery) => {
   return {
     items: rows.map((row) => ({
       ...row,
-      emailVerifiedAt: row.emailVerifiedAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
     })),
     meta: buildMeta({ page: query.page, limit: query.limit, offset: 0 }, Number(countRow?.total ?? 0)),
@@ -452,7 +444,7 @@ export const updateAdminUser = async (
     'USER_UPDATE',
     'USER',
     updated.id,
-    `Роль: ${updated.role}; статус: ${updated.status}. ${input.note ?? ''}`.trim(),
+    `@${updated.username}: роль ${updated.role}; статус ${updated.status}. ${input.note ?? ''}`.trim(),
   );
 
   return { id: updated.id, role: updated.role, status: updated.status, deleted: false };
@@ -472,59 +464,61 @@ export const deleteAdminUser = async (id: string, admin: AuthUser): Promise<void
 export const createAdminAccount = async (
   admin: AuthUser,
   input: CreateAdminInput,
-): Promise<{ user: AuthUser; temporaryPassword: string; emailSent: boolean }> => {
-  const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email)).limit(1);
-  if (existing) throw conflict('Користувач із цією поштою вже існує.', { email: 'Пошта вже зайнята.' });
+): Promise<{ user: AuthUser; temporaryPassword: string }> => {
+  const existing = await db
+    .select({ username: users.username, login: users.login, email: users.email })
+    .from(users)
+    .where(or(eq(users.username, input.username), eq(users.login, input.login), eq(users.email, input.email)))
+    .limit(1);
+
+  const [existingUser] = existing;
+  if (existingUser) {
+    const fields: Record<string, string> = {};
+    if (existingUser.username === input.username) fields.username = 'Юзернейм уже зайнятий.';
+    if (existingUser.login === input.login) fields.login = 'Логін уже зайнятий.';
+    if (existingUser.email === input.email) fields.email = 'Пошта вже зайнята.';
+    throw conflict('Перевірте юзернейм, логін і пошту.', fields);
+  }
 
   const temporaryPassword = input.password ?? generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);
-  const now = new Date();
 
   let created: User | undefined;
   try {
     [created] = await db
       .insert(users)
       .values({
+        username: input.username,
+        login: input.login,
         email: input.email,
         passwordHash,
-        displayName: input.displayName,
         role: 'ADMIN',
         status: 'ACTIVE',
-        emailVerifiedAt: now,
         mustChangePassword: true,
       })
       .returning();
   } catch (error) {
     if (isUniqueViolation(error)) {
-      throw conflict('Користувач із цією поштою вже існує.', { email: 'Пошта вже зайнята.' });
+      throw conflict('Юзернейм, логін або пошта вже зайняті.', {
+        username: 'Можливо, зайнято.',
+        login: 'Можливо, зайнято.',
+        email: 'Можливо, зайнято.',
+      });
     }
     throw error;
   }
 
   if (!created) throw new Error('Failed to create administrator.');
 
-  let emailSent = true;
-  try {
-    await sendAdminCredentialsEmail({
-      to: created.email,
-      displayName: created.displayName,
-      email: created.email,
-      temporaryPassword,
-    });
-  } catch (error) {
-    emailSent = false;
-    logger.error({ error, userId: created.id }, 'admin:credentials-email-failed');
-  }
-
   await writeAudit(
     admin.id,
     'ADMIN_CREATE',
     'USER',
     created.id,
-    `Створено адміністратора ${created.email}; лист ${emailSent ? 'надіслано' : 'не надіслано'}.`,
+    `Створено адміністратора @${created.username}.`,
   );
 
-  return { user: toAuthUser(created), temporaryPassword, emailSent };
+  return { user: toAuthUser(created), temporaryPassword };
 };
 
 export const listAudit = async (page: number, limit: number) => {
@@ -537,7 +531,7 @@ export const listAudit = async (page: number, limit: number) => {
       targetId: auditLogs.targetId,
       note: auditLogs.note,
       createdAt: auditLogs.createdAt,
-      adminName: adminUser.displayName,
+      adminUsername: adminUser.username,
     })
     .from(auditLogs)
     .leftJoin(adminUser, eq(auditLogs.adminId, adminUser.id))

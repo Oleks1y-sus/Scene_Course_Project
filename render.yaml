@@ -34,20 +34,8 @@ services:
         value: "true"
       - key: SESSION_PEPPER
         sync: false
-      - key: OTP_PEPPER
-        sync: false
       - key: IP_PEPPER
         sync: false
-      - key: MAIL_MODE
-        value: resend
-      - key: RESEND_API_KEY
-        sync: false
-      - key: RESEND_FROM
-        sync: false
-      - key: SUPPORT_EMAIL
-        sync: false
-      - key: EXPOSE_DEV_CODES
-        value: "false"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -60,3 +48,7 @@ services:
         value: "false"
       - key: RATE_LIMIT_DISABLED
         value: "false"
+      - key: MAX_ACTIVE_SESSIONS
+        value: "10"
+      - key: LOG_LEVEL
+        value: info

@@ -1,8 +1,4 @@
 import { z } from 'zod';
-import {
-  cleanupDisplayName,
-  isValidDisplayName,
-} from '../../lib/text.js';
 
 export const emailSchema = z
   .email({ error: 'Введіть коректну електронну пошту.' })
@@ -17,22 +13,25 @@ export const passwordSchema = z
   .refine((value) => /[A-ZА-ЯІЇЄҐ]/.test(value), 'Додайте хоча б одну велику літеру.')
   .refine((value) => /\d/.test(value), 'Додайте хоча б одну цифру.');
 
-export const displayNameSchema = z
-  .string({ error: 'Введіть ім’я.' })
-  .max(80, 'Ім’я занадто довге.')
-  .transform(cleanupDisplayName)
-  .refine((value) => value.length >= 2, 'Ім’я має містити щонайменше 2 символи.')
-  .refine((value) => value.length <= 60, 'Ім’я має містити не більше 60 символів.')
-  .refine(isValidDisplayName, 'Ім’я може містити лише літери, пробіли, апостроф, крапку та дефіс.');
+const credentialNameSchema = (label: string) =>
+  z
+    .string({ error: `Введіть ${label}.` })
+    .trim()
+    .toLowerCase()
+    .min(3, `${label} має містити щонайменше 3 символи.`)
+    .max(30, `${label} має містити не більше 30 символів.`)
+    .regex(
+      /^[a-z][a-z0-9_]*$/,
+      `${label} може містити лише латинські літери, цифри та підкреслення й має починатися з літери.`,
+    );
 
-export const codeSchema = z
-  .string({ error: 'Введіть код.' })
-  .trim()
-  .regex(/^\d{6}$/, 'Код має містити 6 цифр.');
+export const usernameSchema = credentialNameSchema('юзернейм');
+export const loginNameSchema = credentialNameSchema('логін');
 
 export const registerSchema = z
   .object({
-    displayName: displayNameSchema,
+    username: usernameSchema,
+    login: loginNameSchema,
     email: emailSchema,
     password: passwordSchema,
     acceptTerms: z.boolean().refine((value) => value, 'Підтвердьте згоду з умовами.'),
@@ -41,28 +40,24 @@ export const registerSchema = z
 
 export const loginSchema = z
   .object({
-    email: emailSchema,
+    login: loginNameSchema,
     password: z.string({ error: 'Введіть пароль.' }).min(1, 'Введіть пароль.').max(128, 'Пароль занадто довгий.'),
   })
   .strict();
 
-export const verifyEmailSchema = z
+export const forgotPasswordSchema = z
   .object({
+    login: loginNameSchema,
     email: emailSchema,
-    code: codeSchema,
   })
   .strict();
 
-export const verifyLoginSchema = z
+export const resetPasswordSchema = z
   .object({
-    email: emailSchema,
-    code: codeSchema,
-  })
-  .strict();
-
-export const resendCodeSchema = z
-  .object({
-    email: emailSchema,
-    purpose: z.enum(['VERIFY_EMAIL', 'LOGIN'], { error: 'Некоректна дія.' }),
+    token: z
+      .string({ error: 'Відсутній токен відновлення.' })
+      .min(20, 'Некоректний токен відновлення.')
+      .max(128, 'Некоректний токен відновлення.'),
+    newPassword: passwordSchema,
   })
   .strict();
