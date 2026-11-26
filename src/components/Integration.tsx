@@ -1,14 +1,18 @@
+'use client';
+
 import integrationLogo1 from '@/public/img/integration-logo-1.png';
 import integrationLogo2 from '@/public/img/integration-logo-2.png';
 import integrationLogo3 from '@/public/img/integration-logo-3.png';
 import integrationLogo4 from '@/public/img/integration-logo-4.png';
 import integrationBadge from '@/public/img/integration-badge.jpg';
+import { ScrollRevealInit } from '@/components/ScrollRevealInit';
 
 export default function Integration() {
   return (
     <section className="integration">
       <div className="container">
-        <div className="integration__grid scroll-reveal">
+        <ScrollRevealInit>
+        <div className="integration__grid">
           <div className="integration__ovals-col">
             <div className="integration__ovals-chess">
               <div className="integration__ovals-left">
@@ -37,7 +41,7 @@ export default function Integration() {
             </div>
           </div>
 
-          <div className="integration__content-col scroll-reveal">
+          <div className="integration__content-col">
             <div className="integration__header">
               <h2 className="integration__title">
                 Інтегруйте<br />
@@ -53,7 +57,9 @@ export default function Integration() {
               </p>
             </div>
           </div>
+          
         </div>
+        </ScrollRevealInit>
       </div>
     </section>
   );

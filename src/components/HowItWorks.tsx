@@ -3,6 +3,7 @@
 import howCreate from '@/public/img/how-create.jpg';
 import howEngage from '@/public/img/how-engage.png';
 import howAnalyze from '@/public/img/how-analyze.png';
+import { ScrollRevealInit } from '@/components/ScrollRevealInit';
 
 export default function HowItWorks() {
   const openModal = () => (document.getElementById('demo-modal') as HTMLDialogElement)?.showModal();
@@ -10,7 +11,8 @@ export default function HowItWorks() {
   return (
     <section className="how-it-works" id="how-it-works">
       <div className="container">
-        <div className="how-it-works__header scroll-reveal">
+        <ScrollRevealInit>
+        <div className="how-it-works__header">
           <h2 className="how-it-works__title">Як це<br />працює</h2>
           <div className="how-it-works__intro">
             <p className="how-it-works__intro-text">
@@ -19,9 +21,11 @@ export default function HowItWorks() {
             <button type="button" className="btn btn--primary how-it-works__btn" onClick={openModal}>Дізнатися більше</button>
           </div>
         </div>
+        </ScrollRevealInit>
 
         <div className="how-it-works__steps">
-          <div className="how-it-works__step scroll-reveal">
+          <ScrollRevealInit>
+          <div className="how-it-works__step">
             <div className="how-it-works__step-content">
               <span className="how-it-works__step-num">Крок 1</span>
               <h3 className="how-it-works__step-title">
@@ -39,8 +43,10 @@ export default function HowItWorks() {
               <img src={howCreate.src} alt="Інтерфейс створення заходу" loading="lazy" />
             </div>
           </div>
+          </ScrollRevealInit>
 
-          <div className="how-it-works__step scroll-reveal delay-100">
+          <ScrollRevealInit delay="delay-100">
+          <div className="how-it-works__step">
             <div className="how-it-works__step-content">
               <span className="how-it-works__step-num">Крок 2</span>
               <h3 className="how-it-works__step-title">
@@ -58,8 +64,10 @@ export default function HowItWorks() {
               <img src={howEngage.src} alt="Інтерфейс залучення аудиторії" loading="lazy" />
             </div>
           </div>
+          </ScrollRevealInit>
 
-          <div className="how-it-works__step scroll-reveal delay-200">
+        <ScrollRevealInit delay="delay-200">
+          <div className="how-it-works__step">
             <div className="how-it-works__step-content">
               <span className="how-it-works__step-num">Крок 3</span>
               <h3 className="how-it-works__step-title">
@@ -77,8 +85,10 @@ export default function HowItWorks() {
               <img src={howAnalyze.src} alt="Інтерфейс аналітики заходу" loading="lazy" />
             </div>
           </div>
+          </ScrollRevealInit>
+            
+          </div>
         </div>
-      </div>
     </section>
   );
 }

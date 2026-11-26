@@ -1,23 +1,30 @@
+'use client';
+
 import studioAgenda from '@/public/img/studio-agenda.jpg';
 import studioBrand from '@/public/img/studio-brand.png';
 import studioStage from '@/public/img/studio-stage.png';
 import studioGreenroom from '@/public/img/studio-greenroom.jpg';
+import { ScrollRevealInit } from '@/components/ScrollRevealInit';
 
 export default function Studio() {
   return (
     <section className="studio">
       <div className="container">
-        <div className="studio__heading scroll-reveal">
+        <ScrollRevealInit>
+        <div className="studio__heading">
           <p className="studio__label">Працює на</p>
           <h2 className="studio__title">Сцена<br /><span className="studio__title-sub">Студія</span></h2>
         </div>
+        </ScrollRevealInit>
 
-        <div className="studio__grid scroll-reveal delay-300">
+        <ScrollRevealInit delay="delay-300">
+        <div className="studio__grid">
           <article className="studio__card studio__card--main">
             <div className="studio__card-content">
               <h3 className="studio__card-title">Конструктор програми з перетягуванням</h3>
               <p className="studio__card-desc">Швидко змінюйте послідовність дій вебінару — програма заходу оновлюється автоматично щоразу, коли ви переставляєте блоки.</p>
             </div>
+            
             <div className="studio__card-media">
               <img src={studioAgenda.src} alt="Інтерфейс конструктора програми заходу" loading="lazy" />
             </div>
@@ -55,7 +62,7 @@ export default function Studio() {
             </article>
           </div>
         </div>
-
+        </ScrollRevealInit>
         <div className="studio__footer">
           <a href="#features" className="btn btn--outline-light">
             Усі можливості

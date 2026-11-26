@@ -1,11 +1,15 @@
+'use client';
+
 import revenueMockup from '@/public/img/revenue-mockup.jpg';
+import { ScrollRevealInit } from '@/components/ScrollRevealInit';
 
 export default function Revenue() {
   return (
     <section className="revenue">
       <div className="container">
         <div className="revenue__inner">
-          <div className="revenue__left scroll-reveal">
+          <ScrollRevealInit>
+          <div className="revenue__left">
             <h2 className="revenue__title">
               <span className="revenue__title-block">Зростіть</span>
               <span className="revenue__title-inline">
@@ -16,14 +20,17 @@ export default function Revenue() {
               </span>
             </h2>
           </div>
+          </ScrollRevealInit>
 
-          <div className="revenue__right scroll-reveal delay-200">
+          <ScrollRevealInit delay="delay-200">
+          <div className="revenue__right">
             <div className="revenue__stat-list">
               <div className="revenue__stat-item">
                 <span className="revenue__stat-number">+87%</span>
                 <p className="revenue__stat-text">зростання залученості учасників</p>
                 <span className="revenue__stat-meta">у «ТехноВектор»</span>
               </div>
+              
 
               <div className="revenue__stat-item">
                 <span className="revenue__stat-number">₴68 млн</span>
@@ -38,6 +45,7 @@ export default function Revenue() {
               </div>
             </div>
           </div>
+          </ScrollRevealInit>
         </div>
       </div>
     </section>

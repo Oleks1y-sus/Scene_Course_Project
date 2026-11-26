@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450" role="img">
+  <defs>
+    <linearGradient id="g-cover-01" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset=".55" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <radialGradient id="r-cover-01" cx=".8" cy=".2" r=".8">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g-cover-01)"/>
+  <rect width="800" height="450" fill="url(#r-cover-01)"/>
+  
+  <g fill="none" stroke="#22d3ee" stroke-opacity=".55">
+    <circle cx="640" cy="110" r="150" stroke-width="2"/>
+    <circle cx="640" cy="110" r="110" stroke-width="1.5"/>
+    <circle cx="640" cy="110" r="70" stroke-width="1"/>
+    <circle cx="640" cy="110" r="30" stroke-width="1"/>
+  </g>
+  <circle cx="150" cy="340" r="90" fill="#22d3ee" fill-opacity=".18"/>
+  <circle cx="210" cy="300" r="40" fill="#22d3ee" fill-opacity=".35"/>
+  <rect width="800" height="450" fill="none" stroke="#ffffff" stroke-opacity=".08"/>
+</svg>

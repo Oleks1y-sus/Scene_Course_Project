@@ -1,38 +1,49 @@
 'use client';
 
-import { useEffect } from 'react';
-// import { usePathname } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 
-export default function ScrollRevealInit() {
- // const pathname = usePathname(); // Потрібно для перезапуску при зміні сторінок
+interface ScrollRevealProps {
+  children?: React.ReactElement<{ className?: string; ref?: React.Ref<HTMLElement> }>;
+  delay?: string;
+}
+
+export function ScrollRevealInit({ children, delay = '' }: ScrollRevealProps) {
+  const ref = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const revealElements = document.querySelectorAll('.scroll-reveal');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
     if (prefersReducedMotion || !('IntersectionObserver' in window)) {
-      revealElements.forEach((element) => element.classList.add('is-visible'));
+      setIsVisible(true);
       return;
     }
 
-    const scrollObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      });
-    }, {
-      rootMargin: '0px 0px -80px 0px',
-      threshold: 0.1,
-    });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '0px 0px -80px 0px', threshold: 0.1 }
+    );
 
-    revealElements.forEach((element) => scrollObserver.observe(element));
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
 
-    // Очищення обсерватора при розмонтуванні або зміні сторінки
-    return () => {
-      scrollObserver.disconnect();
-    };
-  }, []); // [pathname]Ефект спрацьовує заново, якщо користувач перейшов на іншу сторінку
+  // Захист: якщо children не передано або це не HTML/React-елемент
+  if (!React.isValidElement(children)) {
+    return children ?? null;
+  }
 
-  return null; // Компонент нічого не рендерить у DOM, лише виконує логіку
+  const existingClassName = children.props?.className || '';
+  const combinedClassName = `${existingClassName} scroll-reveal ${delay} ${
+    isVisible ? 'is-visible' : ''
+  }`.trim();
+
+  return React.cloneElement(children, {
+    ref,
+    className: combinedClassName,
+  });
 }

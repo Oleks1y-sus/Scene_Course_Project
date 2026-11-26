@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img">
+  <defs>
+    <linearGradient id="bg-avatar-06" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f0a0a"/>
+      <stop offset="1" stop-color="#ef4444"/>
+    </linearGradient>
+    <linearGradient id="sh-avatar-06" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fecaca" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#ef4444" stop-opacity=".7"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#bg-avatar-06)"/>
+  <circle cx="221" cy="35" r="58" fill="#fecaca" fill-opacity=".12"/>
+  <circle cx="35" cy="221" r="42" fill="#fecaca" fill-opacity=".1"/>
+  <g transform="rotate(185 128 128)" opacity=".28">
+    <rect x="18" y="112" width="220" height="1.5" fill="#fecaca"/>
+    <rect x="60" y="132" width="136" height="1" fill="#fecaca"/>
+  </g>
+  <circle cx="128" cy="101" r="39" fill="url(#sh-avatar-06)"/>
+  <path d="M55 219c6-45 35-70 73-70s67 25 73 70Z" fill="url(#sh-avatar-06)"/>
+  <circle cx="128" cy="101" r="39" fill="none" stroke="#ffffff" stroke-opacity=".18"/>
+</svg>

@@ -1,0 +1,62 @@
+services:
+  - type: web
+    name: scene-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: server
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: DB_POOL_MAX
+        value: "10"
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_EXTRA_ORIGINS
+        value: ""
+      - key: SESSION_COOKIE_NAME
+        value: scene_session
+      - key: SESSION_TTL_DAYS
+        value: "7"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SESSION_PEPPER
+        sync: false
+      - key: OTP_PEPPER
+        sync: false
+      - key: IP_PEPPER
+        sync: false
+      - key: MAIL_MODE
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: EXPOSE_DEV_CODES
+        value: "false"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: scene-media
+      - key: SEED_DEMO
+        value: "false"
+      - key: ALLOW_ORIGINLESS_REQUESTS
+        value: "false"
+      - key: RATE_LIMIT_DISABLED
+        value: "false"

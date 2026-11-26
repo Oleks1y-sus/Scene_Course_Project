@@ -1,12 +1,23 @@
 {
   "name": "scene-project",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9"
+  },
   "scripts": {
     "dev": "next dev",
+    "dev:api": "npm --prefix server run dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "server:install": "npm --prefix server install",
+    "server:build": "npm --prefix server run build",
+    "server:migrate": "npm --prefix server run db:migrate",
+    "server:seed": "npm --prefix server run db:seed",
+    "server:test": "npm --prefix server run test",
+    "server:typecheck": "npm --prefix server run typecheck"
   },
   "dependencies": {
     "@splidejs/splide": "^4.1.4",

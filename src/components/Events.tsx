@@ -1,29 +1,33 @@
 'use client';
 
+import Link from 'next/link';
 import eventImage from '@/public/img/event-1.jpg';
+import { ScrollRevealInit } from '@/components/ScrollRevealInit';
 
 export default function Events() {
-  const openModal = () => (document.getElementById('demo-modal') as HTMLDialogElement)?.showModal();
-
   return (
     <section className="events" id="events">
       <div className="container">
         <div className="events__header">
-          <h2 className="events__title scroll-reveal">Анонси</h2>
-          <a href="#events" className="btn btn--ghost events__all big-button">Усі заходи</a>
+          <ScrollRevealInit>
+          <h2 className="events__title">Анонси</h2>
+          </ScrollRevealInit>
+          <Link href="/events" className="btn btn--ghost events__all big-button">Усі заходи</Link>
         </div>
 
         <div className="events__list">
-          <article className="event-card scroll-reveal">
+          <ScrollRevealInit>
+          <article className="event-card">
             <div className="event-card__body">
               <time className="event-card__date" dateTime="2026-12-21">21 грудня 2026</time>
               <h3 className="event-card__title">Як привернути увагу на перенасиченому ринку</h3>
-              <button type="button" className="btn btn--primary event-card__btn big-button" onClick={openModal}>Зареєструватися</button>
+              <Link href="/events" className="btn btn--primary event-card__btn big-button">Зареєструватися</Link>
             </div>
             <div className="event-card__media">
               <img src={eventImage.src} alt="Спікери вебінару" loading="lazy" />
             </div>
           </article>
+          </ScrollRevealInit>
         </div>
       </div>
     </section>

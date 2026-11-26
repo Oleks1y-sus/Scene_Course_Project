@@ -1,28 +1,36 @@
+'use client';
+
 import featureOverlays from '@/public/img/feature-overlays.jpg';
 import featurePolls from '@/public/img/feature-polls.png';
 import featureHd from '@/public/img/feature-hd.png';
 import featureQa from '@/public/img/feature-qa.png';
 import featureChat from '@/public/img/feature-chat.png';
+import { ScrollRevealInit } from '@/components/ScrollRevealInit';
 
 export default function Experience() {
   return (
     <section className="experience" id="features">
       <div className="container">
-        <div className="experience__heading scroll-reveal">
+        <ScrollRevealInit>
+        <div className="experience__heading">
           <p className="experience__label">Неперевершений для кожного учасника</p>
           <h2 className="experience__title">Досвід</h2>
         </div>
+        </ScrollRevealInit>
 
         <div className="experience__grid">
-          <article className="experience__card experience__card--wide scroll-reveal">
+          <ScrollRevealInit>
+          <article className="experience__card experience__card--wide">
             <img src={featureOverlays.src} alt="Інтерактивні накладки поверх живого відео" className="h100" loading="lazy" />
             <div className="experience__card-text">
               <h3 className="experience__card-title">Інтерактивні накладки</h3>
               <p className="experience__card-desc">Додавайте фірмову графіку поверх живого відео: представляйте спікерів, виділяйте головне та показуйте клікабельні заклики до дії.</p>
             </div>
           </article>
+          </ScrollRevealInit>
 
-          <div className="experience__row scroll-reveal delay-100">
+          <ScrollRevealInit delay="delay-100">
+          <div className="experience__row">
             <article className="experience__card experience__card--dark-text">
               <img src={featurePolls.src} alt="Інтерактивні опитування на сцені" className="h100" loading="lazy" />
               <div className="experience__card-text">
@@ -30,6 +38,7 @@ export default function Experience() {
                 <p className="experience__card-desc">Запускайте опитування просто на сцені та дивіться, як результати оновлюються в реальному часі.</p>
               </div>
             </article>
+          
 
             <article className="experience__card experience__card--light-text">
               <img src={featureHd.src} alt="Трансляція у високій якості HD" className="h100" loading="lazy" />
@@ -39,7 +48,8 @@ export default function Experience() {
               </div>
             </article>
           </div>
-
+          </ScrollRevealInit>
+          <ScrollRevealInit delay="delay-200">
           <div className="experience__row">
             <article className="experience__card experience__card--light-text">
               <img src={featureQa.src} alt="Блок питань та відповідей" loading="lazy" />
@@ -57,6 +67,7 @@ export default function Experience() {
               </div>
             </article>
           </div>
+          </ScrollRevealInit>
         </div>
 
         <div className="experience__footer">

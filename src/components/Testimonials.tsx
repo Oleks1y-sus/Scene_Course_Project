@@ -5,47 +5,86 @@ import testimonialTalisha from '@/public/img/testimonial-talisha.jpg';
 import testimonialDribbble from '@/public/img/testimonial-dribbble.png';
 import { useEffect, useRef } from 'react';
 
+interface AutoScrollComponent {
+  pause: () => void;
+  play: () => void;
+}
+
+interface SplideInstance {
+  go: (direction: string) => void;
+  destroy: () => void;
+  Components?: { AutoScroll?: AutoScrollComponent };
+}
+
 export default function Testimonials() {
-  const splideInstance = useRef<any>(null);
+  const splideRef = useRef<HTMLDivElement>(null);
+  const splideInstance = useRef<SplideInstance | null>(null);
 
   useEffect(() => {
-    let splide: any;
-    import('@splidejs/splide').then(({ default: Splide }) => {
-      import('@splidejs/splide-extension-auto-scroll').then(({ AutoScroll }) => {
-        splide = new Splide('#testimonials-splide', {
-          type: 'loop',
-          perPage: 2,
-          perMove: 1,
-          gap: '1rem',
-          autoScroll: {
-            speed: 0.8,
-            pauseOnHover: true,
+    let isMounted = true;
+
+    async function initSplide() {
+      const [{ default: Splide }, { AutoScroll }] = await Promise.all([
+        import('@splidejs/splide'),
+        import('@splidejs/splide-extension-auto-scroll'),
+      ]);
+
+      // Якщо компонент вже розмонтувався (Strict Mode) або слайдер вже існує — виходимо
+      if (!isMounted || !splideRef.current || splideInstance.current) return;
+
+      const splide = new Splide(splideRef.current, {
+        type: 'loop',
+        perPage: 2,
+        perMove: 1,
+        gap: '1rem',
+        speed: 600, // Швидкість плавного переходу при кліку на стрілки (мс)
+        autoScroll: {
+          speed: 0.8,
+          pauseOnHover: true,
+          pauseOnFocus: false,
+        },
+        pagination: false,
+        breakpoints: {
+          768: {
+            perPage: 1,
           },
-          pagination: false,
-          breakpoints: {
-            768: {
-              perPage: 1,
-            },
-          },
-        });
-        splide.mount({ AutoScroll });
-        splideInstance.current = splide;
+        },
       });
-    });
+
+      splide.mount({ AutoScroll });
+      splideInstance.current = splide as unknown as SplideInstance;
+    }
+
+    initSplide();
 
     return () => {
+      isMounted = false;
       if (splideInstance.current) {
         splideInstance.current.destroy();
+        splideInstance.current = null;
       }
     };
   }, []);
 
   const handlePrev = () => {
-    if (splideInstance.current) splideInstance.current.go('<');
+    const splide = splideInstance.current;
+    if (!splide) return;
+    
+    // Тимчасово ставимо AutoScroll на паузу під час ручного кліку, щоб не було ривків
+    const autoScroll = splide.Components?.AutoScroll;
+    autoScroll?.pause();
+    splide.go('<');
+    setTimeout(() => autoScroll?.play(), 650);
   };
 
   const handleNext = () => {
-    if (splideInstance.current) splideInstance.current.go('>');
+    const splide = splideInstance.current;
+    if (!splide) return;
+
+    const autoScroll = splide.Components?.AutoScroll;
+    autoScroll?.pause();
+    splide.go('>');
+    setTimeout(() => autoScroll?.play(), 650);
   };
 
   return (
@@ -71,7 +110,8 @@ export default function Testimonials() {
       </div>
 
       <div className="testimonials__slider-wrap">
-        <div className="splide testimonials__splide" id="testimonials-splide" aria-label="Відгуки клієнтів">
+        {/* Прив'язуємо ref={splideRef} замість пошуку по рядку '#testimonials-splide' */}
+        <div ref={splideRef} className="splide testimonials__splide" id="testimonials-splide" aria-label="Відгуки клієнтів">
           <div className="splide__track">
             <ul className="splide__list">
               <li className="splide__slide">

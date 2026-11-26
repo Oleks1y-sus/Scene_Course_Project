@@ -1,14 +1,16 @@
 'use client';
 
 import photoVideoPreview from '@/public/img/photo-video-preview.png';
-
+import { ScrollRevealInit } from '@/components/ScrollRevealInit';
+  
 export default function Hero() {
   return (
-    <section className="hero">
-      <div className="hero__fog"></div>
-      <div className="hero__content scroll-reveal">
-        <h1 className="hero__title">Залучай і конвертуй</h1>
-        <p className="hero__subtitle">
+    <ScrollRevealInit>  
+      <section className="hero">
+        <div className="hero__fog"></div>
+        <div className="hero__content ">
+          <h1 className="hero__title">Залучай і конвертуй</h1>
+          <p className="hero__subtitle">
           Платформа для маркетологів, що допомагає проводити яскраві онлайн-заходи, які приносять дохід.
         </p>
         <div className="hero__cta">
@@ -22,7 +24,7 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="hero__laptop-wrap scroll-reveal delay-200">
+      <div className="hero__laptop-wrap  delay-200">
         <div className="hero__preview">
           <img
             className="hero__preview-photo"
@@ -34,6 +36,7 @@ export default function Hero() {
           <div className="hero__preview-overlay"></div>
         </div>
       </div>
-    </section>
+      </section>
+    </ScrollRevealInit>
   );
 }

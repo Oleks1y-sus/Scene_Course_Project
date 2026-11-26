@@ -14,7 +14,6 @@ import Events from '@/components/Events';
 import Newsletter from '@/components/Newsletter';
 import ExperienceWelcome from '@/components/ExperienceWelcome';
 import Footer from '@/components/Footer';
-import DemoModal from '@/components/DemoModal';
 
 export default function Home() {
   return (
@@ -37,7 +36,6 @@ export default function Home() {
         <ExperienceWelcome />
       </main>
       <Footer />
-      <DemoModal />
     </>
   );
 }

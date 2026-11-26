@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import logoFooter from '@/public/img/logo-footer.png';
 
 export default function Footer() {
@@ -17,25 +18,27 @@ export default function Footer() {
             <div className="site-footer__col">
               <span className="site-footer__col-title">Продукт</span>
               <ul className="site-footer__list">
-                <li><a href="#features" className="site-footer__link">Можливості</a></li>
-                <li><a href="#how-it-works" className="site-footer__link">Як це працює</a></li>
-                <li><button type="button" className="site-footer__link" onClick={openModal}>Замовити демо</button></li>
+                <li><Link href="/#features" className="site-footer__link">Можливості</Link></li>
+                <li><Link href="/#how-it-works" className="site-footer__link">Як це працює</Link></li>
+                <li><Link href="/create" className="site-footer__link">Створити захід</Link></li>
               </ul>
             </div>
 
             <div className="site-footer__col">
               <span className="site-footer__col-title">Розділи</span>
               <ul className="site-footer__list">
-                <li><a href="#events" className="site-footer__link">Заходи</a></li>
-                <li><a href="#articles" className="site-footer__link">Блог</a></li>
+                <li><Link href="/events" className="site-footer__link">Заходи</Link></li>
+                <li><Link href="/#articles" className="site-footer__link">Блог</Link></li>
+                <li><Link href="/profile" className="site-footer__link">Мій профіль</Link></li>
               </ul>
             </div>
 
             <div className="site-footer__col">
               <span className="site-footer__col-title">Компанія</span>
               <ul className="site-footer__list">
-                <li><a href="#testimonials" className="site-footer__link">Відгуки</a></li>
-                <li><a href="#newsletter" className="site-footer__link">Зв’язатися з нами</a></li>
+                <li><Link href="/#testimonials" className="site-footer__link">Відгуки</Link></li>
+                <li><Link href="/#newsletter" className="site-footer__link">Зв’язатися з нами</Link></li>
+                <li><button type="button" className="site-footer__link" onClick={openModal}>Замовити демо</button></li>
               </ul>
             </div>
           </nav>
@@ -44,8 +47,8 @@ export default function Footer() {
         <div className="site-footer__bottom">
           <div className="site-footer__legal">
             <span className="site-footer__copy">© 2026 «Сцена». Усі права захищено.</span>
-            <a href="#" className="site-footer__legal-link">Політика конфіденційності</a>
-            <a href="#" className="site-footer__legal-link">Умови користування</a>
+            <Link href="/legal/privacy" className="site-footer__legal-link">Політика конфіденційності</Link>
+            <Link href="/legal/terms" className="site-footer__legal-link">Умови користування</Link>
           </div>
 
           <div className="site-footer__socials">
