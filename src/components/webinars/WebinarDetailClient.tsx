@@ -9,6 +9,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Modal } from '@/components/ui/Modal';
 import { Countdown } from '@/components/webinars/Countdown';
 import { ReportDialog } from '@/components/webinars/ReportDialog';
+import { useNow } from '@/lib/useNow';
 import { apiDelete, apiGet, apiPost, ApiError, errorMessage } from '@/lib/api';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import {
@@ -20,7 +21,7 @@ import {
 } from '@/lib/format';
 import type { WebinarDetail } from '@/lib/types';
 
-type ConfirmAction = 'end' | 'cancel' | 'delete';
+type ConfirmAction = 'end' | 'delete';
 
 interface FavoriteResult {
   favorited: boolean;
@@ -37,11 +38,6 @@ const CONFIRM_COPY: Record<ConfirmAction, { title: string; text: string; label: 
     title: 'Завершити захід?',
     text: 'Ефір буде завершено, а всі зареєстровані учасники отримають статус «відвідали». Дію не можна скасувати.',
     label: 'Завершити',
-  },
-  cancel: {
-    title: 'Скасувати захід?',
-    text: 'Захід отримає статус «скасовано» та зникне з активного каталогу. Учасники більше не зможуть зареєструватися.',
-    label: 'Скасувати захід',
   },
   delete: {
     title: 'Видалити захід?',
@@ -64,6 +60,7 @@ export function WebinarDetailClient({ id }: { id: string }) {
   const [copied, setCopied] = useState(false);
   const [manualLink, setManualLink] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const now = useNow();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -171,10 +168,11 @@ export function WebinarDetailClient({ id }: { id: string }) {
       }
       return;
     }
+    if (action !== 'end') return;
     await runAction(
-      action,
-      () => apiPost<WebinarDetail>(`/webinars/${webinar.id}/${action}`),
-      action === 'end' ? 'Захід завершено.' : 'Захід скасовано.',
+      'end',
+      () => apiPost<WebinarDetail>(`/webinars/${webinar.id}/end`),
+      'Захід завершено.',
     );
   };
 
@@ -228,6 +226,7 @@ export function WebinarDetailClient({ id }: { id: string }) {
   const isFinished = webinar.status === 'COMPLETED' || webinar.status === 'CANCELLED';
   const showFavorite = webinar.canFavorite || webinar.isFavorite;
   const registrationClosed = isFinished || webinar.spotsLeft <= 0;
+  const startAvailable = now > 0 && new Date(webinar.startsAt).getTime() <= now;
 
   return (
     <div className="app-page detail-page">
@@ -337,23 +336,24 @@ export function WebinarDetailClient({ id }: { id: string }) {
                     <Icon name="i-edit" size={17} /> Налаштувати захід
                   </Link>
                   {webinar.canStart ? (
-                    <button
-                      type="button"
-                      className="btn btn--live btn--block"
-                      disabled={busy !== null}
-                      onClick={() => void runAction('start', () => apiPost<WebinarDetail>(`/webinars/${webinar.id}/start`), 'Ефір розпочато!')}
-                    >
-                      <Icon name="i-play" size={17} /> Розпочати ефір
-                    </button>
+                    startAvailable ? (
+                      <button
+                        type="button"
+                        className="btn btn--live btn--block"
+                        disabled={busy !== null}
+                        onClick={() => void runAction('start', () => apiPost<WebinarDetail>(`/webinars/${webinar.id}/start`), 'Ефір розпочато!')}
+                      >
+                        <Icon name="i-play" size={17} /> Розпочати ефір
+                      </button>
+                    ) : (
+                      <button type="button" className="btn btn--ghost btn--block" disabled>
+                        <Icon name="i-clock" size={17} /> Розпочати о {formatTime(webinar.startsAt)}
+                      </button>
+                    )
                   ) : null}
                   {webinar.canEnd ? (
                     <button type="button" className="btn btn--ghost btn--block" disabled={busy !== null} onClick={() => setConfirmAction('end')}>
                       <Icon name="i-stop" size={17} /> Завершити ефір
-                    </button>
-                  ) : null}
-                  {webinar.canCancel ? (
-                    <button type="button" className="btn btn--ghost btn--block" disabled={busy !== null} onClick={() => setConfirmAction('cancel')}>
-                      <Icon name="i-ban" size={17} /> Скасувати захід
                     </button>
                   ) : null}
                   <button type="button" className="btn btn--danger-ghost btn--block" disabled={busy !== null} onClick={() => setConfirmAction('delete')}>

@@ -44,7 +44,9 @@ const EMPTY: FormState = {
   description: '',
   category: 'TECHNOLOGY',
   tags: [],
-  startsAt: defaultStartsAt(),
+  // Set on the client in an effect: calculating a local datetime during SSR
+  // uses the server's UTC clock and causes a React hydration mismatch.
+  startsAt: '',
   durationMinutes: '60',
   capacity: '100',
 };
@@ -98,6 +100,11 @@ export function WebinarForm({ mode, webinarId }: { mode: 'create' | 'edit'; webi
   const [uploadError, setUploadError] = useState('');
   const [existing, setExisting] = useState<WebinarDetail | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isCreate) return;
+    setForm((current) => (current.startsAt ? current : { ...current, startsAt: defaultStartsAt() }));
+  }, [isCreate]);
 
   useEffect(() => {
     if (isCreate || !webinarId) return;
@@ -269,10 +276,11 @@ export function WebinarForm({ mode, webinarId }: { mode: 'create' | 'edit'; webi
     );
   }
 
-  const parsedPreviewDate = new Date(form.startsAt);
-  const previewDate = Number.isNaN(parsedPreviewDate.getTime())
-    ? new Date().toISOString()
-    : parsedPreviewDate.toISOString();
+  const parsedPreviewDate = form.startsAt ? new Date(form.startsAt) : null;
+  const previewDate =
+    parsedPreviewDate && !Number.isNaN(parsedPreviewDate.getTime())
+      ? parsedPreviewDate.toISOString()
+      : '';
 
   return (
     <div className="app-page create-page">
@@ -527,7 +535,7 @@ export function WebinarForm({ mode, webinarId }: { mode: 'create' | 'edit'; webi
                   {form.description.trim().slice(0, 130) || 'Короткий опис з’явиться тут після заповнення форми.'}
                 </p>
                 <p className="preview-card__meta">
-                  <Icon name="i-calendar" size={15} /> {formatDateTime(previewDate)}
+                  <Icon name="i-calendar" size={15} /> {previewDate ? formatDateTime(previewDate) : 'Оберіть дату та час'}
                 </p>
                 <p className="preview-card__meta">
                   <Icon name="i-clock" size={15} /> {formatDuration(Math.max(0, Number(form.durationMinutes) || 0))}

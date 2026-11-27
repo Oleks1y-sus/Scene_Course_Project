@@ -1,7 +1,10 @@
+// A fixed time zone keeps SSR and hydration output identical: the Vercel
+// server runs in UTC, while a browser in Ukraine is UTC+2/UTC+3.
 const dateFormatter = new Intl.DateTimeFormat('uk-UA', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
+  timeZone: 'Europe/Kyiv',
 });
 
 const dateTimeFormatter = new Intl.DateTimeFormat('uk-UA', {
@@ -9,16 +12,19 @@ const dateTimeFormatter = new Intl.DateTimeFormat('uk-UA', {
   month: 'long',
   hour: '2-digit',
   minute: '2-digit',
+  timeZone: 'Europe/Kyiv',
 });
 
 const shortDateFormatter = new Intl.DateTimeFormat('uk-UA', {
   day: 'numeric',
   month: 'short',
+  timeZone: 'Europe/Kyiv',
 });
 
 const timeFormatter = new Intl.DateTimeFormat('uk-UA', {
   hour: '2-digit',
   minute: '2-digit',
+  timeZone: 'Europe/Kyiv',
 });
 
 export const formatDate = (iso: string): string => dateFormatter.format(new Date(iso));

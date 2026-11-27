@@ -565,6 +565,17 @@ export const startWebinar = async (id: string, viewer: AuthUser): Promise<Webina
   if (current.status === 'LIVE') return getWebinarForViewer(id, viewer);
   if (current.status !== 'UPCOMING') throw conflict('Розпочати можна лише запланований захід.');
 
+  if (current.startsAt.getTime() > Date.now()) {
+    const startsAtLabel = new Intl.DateTimeFormat('uk-UA', {
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Kyiv',
+    }).format(current.startsAt);
+    throw conflict(`Захід ще не почався. Ефір можна розпочати ${startsAtLabel}.`);
+  }
+
   await db
     .update(webinars)
     .set({ status: 'LIVE', liveStartedAt: new Date(), updatedAt: new Date() })

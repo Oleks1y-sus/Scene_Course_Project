@@ -20,6 +20,7 @@ import {
   buildQuery,
   errorMessage,
 } from '@/lib/api';
+import { useNow } from '@/lib/useNow';
 import {
   AVATAR_PRESETS,
   MODERATION_LABELS,
@@ -29,6 +30,7 @@ import {
 import {
   formatDate,
   formatDateTime,
+  formatTime,
   isValidEmail,
   isValidHandle,
   passwordChecks,
@@ -403,6 +405,8 @@ function ProfileWebinarRow({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const now = useNow();
+  const startAvailable = now > 0 && new Date(webinar.startsAt).getTime() <= now;
 
   const run = async (key: string, action: () => Promise<unknown>, after?: () => void) => {
     setBusy(key);
@@ -463,18 +467,19 @@ function ProfileWebinarRow({
           <>
             <Link href={`/events/${webinar.id}/edit`} className="btn btn--ghost btn--small">Редагувати</Link>
             {webinar.canStart ? (
-              <button type="button" className="btn btn--live btn--small" disabled={busy !== null} onClick={() => void run('start', () => apiPost(`/webinars/${webinar.id}/start`), onRefresh)}>
-                <Icon name="i-play" size={14} /> Почати
-              </button>
+              startAvailable ? (
+                <button type="button" className="btn btn--live btn--small" disabled={busy !== null} onClick={() => void run('start', () => apiPost(`/webinars/${webinar.id}/start`), onRefresh)}>
+                  <Icon name="i-play" size={14} /> Почати
+                </button>
+              ) : (
+                <button type="button" className="btn btn--ghost btn--small" disabled title="Захід ще не почався">
+                  <Icon name="i-clock" size={14} /> О {formatTime(webinar.startsAt)}
+                </button>
+              )
             ) : null}
             {webinar.canEnd ? (
               <button type="button" className="btn btn--ghost btn--small" disabled={busy !== null} onClick={() => void run('end', () => apiPost(`/webinars/${webinar.id}/end`), onRefresh)}>
                 <Icon name="i-stop" size={14} /> Завершити
-              </button>
-            ) : null}
-            {webinar.canCancel ? (
-              <button type="button" className="btn btn--danger-ghost btn--small" disabled={busy !== null} onClick={() => void run('cancel', () => apiPost(`/webinars/${webinar.id}/cancel`), onRefresh)}>
-                Скасувати
               </button>
             ) : null}
           </>
