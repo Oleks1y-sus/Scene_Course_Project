@@ -111,7 +111,7 @@ export default function Testimonials() {
 
       <div className="testimonials__slider-wrap">
         {/* Прив'язуємо ref={splideRef} замість пошуку по рядку '#testimonials-splide' */}
-        <div ref={splideRef} className="splide testimonials__splide" id="testimonials-splide" aria-label="Відгуки клієнтів">
+        <div ref={splideRef} className="splide testimonials__splide" id="testimonials-splide" role="region" aria-label="Відгуки клієнтів">
           <div className="splide__track">
             <ul className="splide__list">
               <li className="splide__slide">
