@@ -76,6 +76,27 @@ const ACTION_LABELS: Record<ResolveAction, string> = {
   DISMISS: 'Відхилити скаргу',
 };
 
+const resolveActionsFor = (report: AdminReport | null): ResolveAction[] => {
+  if (!report) return ['DISMISS'];
+
+  if (report.targetType === 'WEBINAR') {
+    return report.webinarModeration === 'VISIBLE'
+      ? ['HIDE_WEBINAR', 'DISMISS']
+      : ['RESTORE_WEBINAR', 'DISMISS'];
+  }
+
+  switch (report.targetUserStatus) {
+    case 'ACTIVE':
+      return ['SHADOW_BAN_USER', 'BAN_USER', 'DISMISS'];
+    case 'SHADOW_BANNED':
+      return ['ACTIVATE_USER', 'BAN_USER', 'DISMISS'];
+    case 'BANNED':
+      return ['ACTIVATE_USER', 'DISMISS'];
+    default:
+      return ['DISMISS'];
+  }
+};
+
 export function AdminDashboard() {
   const { user } = useAuth();
   const [tab, setTab] = useState<AdminTab>('reports');
@@ -251,9 +272,13 @@ export function AdminDashboard() {
     setReportToResolve(report);
     setResolveNote('');
     if (report.targetType === 'WEBINAR') {
-      setResolveAction(report.webinarModeration === 'HIDDEN' ? 'RESTORE_WEBINAR' : 'HIDE_WEBINAR');
+      setResolveAction(report.webinarModeration === 'VISIBLE' ? 'HIDE_WEBINAR' : 'RESTORE_WEBINAR');
+    } else if (report.targetUserStatus === 'ACTIVE') {
+      setResolveAction('SHADOW_BAN_USER');
+    } else if (report.targetUserStatus === 'SHADOW_BANNED' || report.targetUserStatus === 'BANNED') {
+      setResolveAction('ACTIVATE_USER');
     } else {
-      setResolveAction(report.targetUserStatus === 'BANNED' ? 'ACTIVATE_USER' : 'SHADOW_BAN_USER');
+      setResolveAction('DISMISS');
     }
   };
 
@@ -706,10 +731,7 @@ export function AdminDashboard() {
         <div className="form">
           <fieldset className="report-reasons">
             <legend className="form__label">Дія</legend>
-            {(reportToResolve?.targetType === 'WEBINAR'
-              ? (['HIDE_WEBINAR', 'RESTORE_WEBINAR', 'DISMISS'] as ResolveAction[])
-              : (['SHADOW_BAN_USER', 'BAN_USER', 'ACTIVATE_USER', 'DISMISS'] as ResolveAction[])
-            ).map((action) => (
+            {resolveActionsFor(reportToResolve).map((action) => (
               <label key={action} className={`report-reason ${resolveAction === action ? 'is-selected' : ''}`}>
                 <input type="radio" name="resolve-action" value={action} checked={resolveAction === action} onChange={() => setResolveAction(action)} />
                 <span>{ACTION_LABELS[action]}</span>

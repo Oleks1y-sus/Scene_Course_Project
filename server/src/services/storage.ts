@@ -77,16 +77,7 @@ const uploadToSupabase = async (key: string, buffer: Buffer): Promise<string> =>
       'storage:supabase-upload-failed',
     );
 
-    const hint =
-      response.status === 401 || response.status === 403
-        ? 'Перевірте SUPABASE_SERVICE_ROLE_KEY: потрібен саме service_role, не anon.'
-        : response.status === 404
-          ? 'Перевірте SUPABASE_URL і назву bucket SUPABASE_STORAGE_BUCKET.'
-          : response.status === 413
-            ? 'Файл перевищує ліміт розміру, встановлений для bucket.'
-            : `Supabase Storage повернув код ${response.status}.`;
-
-    throw new AppError(502, 'STORAGE_UPLOAD_FAILED', `Не вдалося зберегти зображення. ${hint}`, {
+    throw new AppError(502, 'STORAGE_UPLOAD_FAILED', 'Не вдалося зберегти зображення.', {
       details: details.slice(0, 500),
     });
   }

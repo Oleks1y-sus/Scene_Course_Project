@@ -6,8 +6,19 @@ import {
   isValidDisplayName,
   normalizeText,
 } from './lib/text.js';
+import { isUniqueViolation } from './lib/http.js';
 import { createWebinarSchema } from './modules/webinars/webinar.schemas.js';
 import { registerSchema } from './modules/auth/auth.schemas.js';
+
+describe('database error helpers', () => {
+  it('detects a PostgreSQL unique violation through Drizzle cause wrappers', () => {
+    expect(isUniqueViolation({ code: '23505' })).toBe(true);
+    expect(isUniqueViolation({ cause: { code: '23505' } })).toBe(true);
+    expect(isUniqueViolation({ cause: { cause: { code: '23505' } } })).toBe(true);
+    expect(isUniqueViolation({ code: '23503' })).toBe(false);
+    expect(isUniqueViolation(new Error('network'))).toBe(false);
+  });
+});
 
 describe('text normalisation', () => {
   it('removes zero-width and control characters', () => {

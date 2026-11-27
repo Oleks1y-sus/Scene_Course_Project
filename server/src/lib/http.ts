@@ -51,7 +51,18 @@ export const buildMeta = (pagination: Pagination, total: number): PageMeta => ({
 });
 
 export const isUniqueViolation = (error: unknown): boolean => {
-  if (!error || typeof error !== 'object') return false;
-  const code = 'code' in error ? String(error.code) : '';
-  return code === '23505';
+  let current: unknown = error;
+
+  // Drizzle wraps driver errors in DrizzleQueryError, so the PostgreSQL
+  // SQLSTATE may live on `cause` (sometimes nested more than once).
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (!current || typeof current !== 'object') return false;
+    if ('code' in current && String((current as { code?: unknown }).code) === '23505') {
+      return true;
+    }
+    if (!('cause' in current)) return false;
+    current = (current as { cause?: unknown }).cause;
+  }
+
+  return false;
 };
