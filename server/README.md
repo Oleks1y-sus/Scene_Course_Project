@@ -71,7 +71,7 @@ Health check: `GET /health`.
 | PATCH | `/webinars/:id` | власник/адмін | Оновити |
 | DELETE | `/webinars/:id` | власник/адмін | М’яке видалення |
 | POST | `/webinars/:id/start` | власник/адмін | `UPCOMING → LIVE` |
-| POST | `/webinars/:id/end` | власник/адмін | `LIVE → COMPLETED`, реєстрації → `ATTENDED` |
+| POST | `/webinars/:id/end` | власник/адмін | `LIVE → COMPLETED`, реєстрації → `ATTENDED`; також автоматично після `durationMinutes` |
 | POST | `/webinars/:id/cancel` | власник/адмін | `→ CANCELLED` |
 | POST/DELETE | `/webinars/:id/favorite` | USER | Обране (не власний захід) |
 | POST/DELETE | `/webinars/:id/register` | USER | Реєстрація (не власний, лише активні) |

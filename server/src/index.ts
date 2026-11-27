@@ -2,14 +2,26 @@ import { createServer } from 'node:http';
 import { createApp } from './app.js';
 import { env } from './env.js';
 import { logger } from './lib/logger.js';
+import { closeExpiredWebinars } from './modules/webinars/webinar.service.js';
 import { revokeExpiredSessions } from './services/session.js';
 
 const app = createApp();
 const server = createServer(app);
 
+await closeExpiredWebinars().catch((error: unknown) => {
+  logger.warn({ error }, 'webinars:auto-close-startup-failed');
+});
+
 server.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'scene-api:started');
 });
+
+const webinarTimer = setInterval(() => {
+  closeExpiredWebinars().catch((error: unknown) => {
+    logger.warn({ error }, 'webinars:auto-close-failed');
+  });
+}, 60_000);
+webinarTimer.unref();
 
 const cleanupTimer = setInterval(() => {
   revokeExpiredSessions().catch((error: unknown) => {

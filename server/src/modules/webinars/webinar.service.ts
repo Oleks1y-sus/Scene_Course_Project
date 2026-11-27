@@ -24,6 +24,7 @@ import {
 } from '../../db/schema.js';
 import { AppError, badRequest, conflict, forbidden, notFound } from '../../lib/errors.js';
 import { buildMeta, type PageMeta } from '../../lib/http.js';
+import { logger } from '../../lib/logger.js';
 import { coverPresetUrl } from '../../lib/presets.js';
 import { uniqueSlug } from '../../lib/slug.js';
 import { isFuture } from '../../lib/time.js';
@@ -582,6 +583,57 @@ export const startWebinar = async (id: string, viewer: AuthUser): Promise<Webina
     .where(eq(webinars.id, id));
 
   return getWebinarForViewer(id, viewer);
+};
+
+let autoCloseRunning = false;
+
+/**
+ * Finishes demo broadcasts that outlived their duration. Runs at API startup
+ * and once a minute afterwards, so an event cannot remain LIVE forever.
+ */
+export const closeExpiredWebinars = async (): Promise<number> => {
+  if (autoCloseRunning) return 0;
+  autoCloseRunning = true;
+
+  try {
+    const expired = await db
+      .select({ id: webinars.id })
+      .from(webinars)
+      .where(
+        and(
+          eq(webinars.status, 'LIVE'),
+          isNull(webinars.deletedAt),
+          sql`coalesce(${webinars.liveStartedAt}, ${webinars.startsAt}) + (${webinars.durationMinutes} * interval '1 minute') <= now()`,
+        ),
+      );
+
+    if (expired.length === 0) return 0;
+
+    const ids = expired.map((row) => row.id);
+    const now = new Date();
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(webinars)
+        .set({ status: 'COMPLETED', endedAt: now, updatedAt: now })
+        .where(inArray(webinars.id, ids));
+
+      await tx
+        .update(registrations)
+        .set({ status: 'ATTENDED', updatedAt: now })
+        .where(
+          and(
+            inArray(registrations.webinarId, ids),
+            eq(registrations.status, 'REGISTERED'),
+          ),
+        );
+    });
+
+    logger.info({ count: ids.length, webinarIds: ids }, 'webinars:auto-closed');
+    return ids.length;
+  } finally {
+    autoCloseRunning = false;
+  }
 };
 
 export const endWebinar = async (id: string, viewer: AuthUser): Promise<WebinarDetail> => {
