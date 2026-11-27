@@ -4,6 +4,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { env } from '../env.js';
 import { AppError } from '../lib/errors.js';
+import { logger } from '../lib/logger.js';
 
 export type MediaKind = 'AVATAR' | 'COVER';
 
@@ -71,7 +72,21 @@ const uploadToSupabase = async (key: string, buffer: Buffer): Promise<string> =>
 
   if (!response.ok) {
     const details = await response.text().catch(() => '');
-    throw new AppError(502, 'STORAGE_UPLOAD_FAILED', 'Не вдалося зберегти зображення.', {
+    logger.error(
+      { status: response.status, details: details.slice(0, 500) },
+      'storage:supabase-upload-failed',
+    );
+
+    const hint =
+      response.status === 401 || response.status === 403
+        ? 'Перевірте SUPABASE_SERVICE_ROLE_KEY: потрібен саме service_role, не anon.'
+        : response.status === 404
+          ? 'Перевірте SUPABASE_URL і назву bucket SUPABASE_STORAGE_BUCKET.'
+          : response.status === 413
+            ? 'Файл перевищує ліміт розміру, встановлений для bucket.'
+            : `Supabase Storage повернув код ${response.status}.`;
+
+    throw new AppError(502, 'STORAGE_UPLOAD_FAILED', `Не вдалося зберегти зображення. ${hint}`, {
       details: details.slice(0, 500),
     });
   }
